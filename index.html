@@ -27,7 +27,7 @@
     <div class="container mx-auto p-4 md:p-8 max-w-6xl">
         <header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-bold text-blue-600">🐷 유라의 가계부 (Yura's Piggy Bank) 🐷</h1>
-            <p class="text-gray-500 mt-2">스스로 용돈을 관리하고 멋진 소비 습관을 길러봐요! (Manage your allowance and build great spending habits!)</p>
+            <p class="text-gray-500 mt-2">오늘의 똑똑한 선택이 내일의 멋진 유라를 만든다! Smart choices today create an amazing Yura tomorrow! Yura’s Dream Builder</p>
         </header>
 
         <!-- 잔액 및 요약 -->
@@ -138,6 +138,30 @@
                 </div>
                 <div id="depositList" class="mt-4 space-y-2">
                     <!-- 예금 내역 -->
+                </div>
+            </div>
+
+            <!-- 목표 (Wish List) -->
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-bold mb-4 text-center text-green-600">🎯 목표 (Wish List) 🎯</h3>
+                <form id="goalForm" class="bg-green-50 p-4 rounded-lg">
+                    <p class="text-center text-sm mb-4">갖고 싶은 것을 정하고 돈을 모아봐요!<br>(Set a goal and save up for it!)</p>
+                    <div class="mb-3">
+                        <label for="goalItem" class="font-bold">목표 항목 (Item)</label>
+                        <input type="text" id="goalItem" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 레고 (e.g., LEGO)" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="goalAmount" class="font-bold">목표 금액 (Amount)</label>
+                        <input type="number" step="0.01" id="goalAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 75.00)" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="goalDate" class="font-bold">목표 날짜 (Target Date)</label>
+                        <input type="date" id="goalDate" class="w-full p-2 border rounded-lg mt-1" required>
+                    </div>
+                    <button type="submit" class="w-full bg-green-500 text-white font-bold p-3 rounded-lg hover:bg-green-600">목표 추가하기 (Add Goal)</button>
+                </form>
+                <div id="goalList" class="mt-4 space-y-2">
+                    <!-- 목표 내역 -->
                 </div>
             </div>
             
@@ -279,7 +303,8 @@
                 transactions: [],
                 deposits: [],
                 allowance: { amount: 0, lastGiven: null },
-                donations: []
+                donations: [],
+                goals: []
             };
 
             function loadData() {
@@ -473,6 +498,25 @@
                 if (graphViewContainer.style.display !== 'hidden') {
                     renderChart();
                 }
+
+                // Render goals
+                const goalListEl = document.getElementById('goalList');
+                goalListEl.innerHTML = '';
+                state.goals.forEach((goal, index) => {
+                    const li = document.createElement('div');
+                    li.className = 'bg-green-50 p-3 rounded-lg text-sm flex justify-between items-center';
+                    const targetDate = new Date(goal.date);
+                    const isAchieved = state.balance >= goal.amount;
+                    
+                    li.innerHTML = `<div>
+                                        <span class="font-bold">${goal.item}</span>
+                                        <span class="text-xs text-gray-500 block">${targetDate.toLocaleDateString('ko-KR')}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="font-bold ${isAchieved ? 'text-green-600' : 'text-red-600'}">$${goal.amount.toFixed(2)}</span>
+                                        ${isAchieved ? '' : `<button data-index="${index}" class="achieve-btn text-xs text-blue-500 hover:underline ml-2">달성하기 (Achieve)</button>`}`;
+                    goalListEl.appendChild(li);
+                });
             }
 
             function checkAllowance() {
@@ -662,6 +706,38 @@
             
             depositAmountInput.addEventListener('input', updateInterestPreview);
             depositPeriodInput.addEventListener('input', updateInterestPreview);
+
+            document.getElementById('goalForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const item = document.getElementById('goalItem').value;
+                const amount = parseFloat(document.getElementById('goalAmount').value);
+                const date = document.getElementById('goalDate').value;
+
+                if (item && amount > 0 && date) {
+                    state.goals.push({ item, amount, date });
+                    saveData();
+                    render();
+                    e.target.reset();
+                }
+            });
+
+            document.getElementById('goalList').addEventListener('click', (e) => {
+                if (e.target.classList.contains('achieve-btn')) {
+                    const index = parseInt(e.target.dataset.index);
+                    const goal = state.goals[index];
+
+                    if (state.balance >= goal.amount) {
+                        state.balance -= goal.amount;
+                        state.transactions.push({ type: 'expense', source: `목표 달성 (${goal.item})`, amount: goal.amount, date: new Date().toISOString() });
+                        state.goals.splice(index, 1);
+                        saveData();
+                        render();
+                        alert(`목표 '${goal.item}' 달성! (${goal.amount} 사용됨)`);
+                    } else {
+                        alert('잔액이 부족합니다! (Insufficient balance!)');
+                    }
+                }
+            });
 
             function initialize() {
                 loadData();
