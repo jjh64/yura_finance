@@ -539,11 +539,11 @@
             }
 
             function switchTab(activeTab) {
-                [incomeTab, expenseTab, donationTab].forEach(tab => tab.classList.remove('active'));
-                [incomeSection, expenseForm, donationForm].forEach(form => form.classList.add('hidden'));
-                if(activeTab === 'income') { incomeTab.classList.add('active'); incomeSection.classList.remove('hidden'); } 
-                else if (activeTab === 'expense') { expenseTab.classList.add('active'); expenseForm.classList.remove('hidden'); } 
-                else { donationTab.classList.add('active'); donationForm.classList.remove('hidden'); }
+                [incomeTab, expenseTab, goalTab].forEach(tab => tab.classList.remove('active'));
+                [incomeSection, expenseForm, goalSection].forEach(section => section.classList.add('hidden'));
+                if (activeTab === 'income') { incomeTab.classList.add('active'); incomeSection.classList.remove('hidden'); }
+                else if (activeTab === 'expense') { expenseTab.classList.add('active'); expenseForm.classList.remove('hidden'); }
+                else { goalTab.classList.add('active'); goalSection.classList.remove('hidden'); }
             }
             
             function updateInterestPreview() {
@@ -559,7 +559,29 @@
 
             document.getElementById('incomeForm').addEventListener('submit', (e) => { e.preventDefault(); const source = document.getElementById('incomeSource').value; const amount = parseFloat(document.getElementById('incomeAmount').value); if (source && amount > 0) { state.balance += amount; state.transactions.push({ type: 'income', source, amount, date: new Date().toISOString() }); saveData(); render(); e.target.reset(); } });
             expenseForm.addEventListener('submit', (e) => { e.preventDefault(); const source = document.getElementById('expenseSource').value; const amount = parseFloat(document.getElementById('expenseAmount').value); const score = parseInt(document.querySelector('input[name="evaluation"]:checked').value); if (source && amount > 0 && state.balance >= amount) { state.balance -= amount; state.evaluationScore += score; state.transactions.push({ type: 'expense', source, amount, score, date: new Date().toISOString() }); saveData(); render(); e.target.reset(); } else if (state.balance < amount) { alert('Not enough money!'); } });
-            donationForm.addEventListener('submit', (e) => { e.preventDefault(); const source = document.getElementById('donationSource').value; const amount = parseFloat(document.getElementById('donationAmount').value); if(source && amount > 0 && state.balance >= amount) { state.balance -= amount; state.donations.push({ source, amount, date: new Date().toISOString() }); state.transactions.push({ type: 'donation', source: `Donated to ${source}`, amount, date: new Date().toISOString() }); saveData(); render(); e.target.reset(); switchTab('income'); alert('Thank you for your warm heart!'); } else if (state.balance < amount) { alert('Not enough money!'); } });
+
+            // Donation (integrated into Expense) button handler
+            const addDonationButton = document.getElementById('addDonationButton');
+            if (addDonationButton) {
+                addDonationButton.addEventListener('pointerup', () => {
+                    const source = document.getElementById('donationSource').value.trim();
+                    const amount = parseFloat(document.getElementById('donationAmount').value);
+                    if (source && amount > 0 && state.balance >= amount) {
+                        state.balance -= amount;
+                        state.donations.push({ source, amount, date: new Date().toISOString() });
+                        state.transactions.push({ type: 'donation', source: `기부: ${source}`, amount, date: new Date().toISOString() });
+                        saveData();
+                        render();
+                        document.getElementById('donationSource').value = '';
+                        document.getElementById('donationAmount').value = '';
+                        alert('따뜻한 마음을 나눠주셔서 고마워요! (Thank you for your warm heart!)');
+                    } else if (state.balance < amount) {
+                        alert('잔액이 부족해요! (Not enough money!)');
+                    } else {
+                        alert('기부할 곳과 금액을 정확히 입력해주세요. (Please enter a valid source and amount.)');
+                    }
+                });
+            }
             document.getElementById('setAllowanceButton').addEventListener('click', () => { const amount = document.getElementById('allowanceAmount').value; if (amount && Number(amount) >= 0) { state.allowance.amount = Number(amount); saveData(); alert(`Weekly allowance set to $${Number(amount).toFixed(2)}!`); checkAllowance(); } });
             
             document.getElementById('depositButton').addEventListener('click', () => { 
@@ -596,7 +618,13 @@
                 } 
             });
 
-            balanceDisplayContainer.addEventListener('click', () => {
+            // Tap helper for cross-device support
+            function onTap(el, handler) {
+                if (!el) return;
+                el.addEventListener('pointerup', (e) => handler(e));
+            }
+
+            onTap(balanceDisplayContainer, () => {
                 passwordModal.classList.remove('hidden');
                 passwordInput.focus();
             });
@@ -698,11 +726,11 @@
                 }
             });
             
-            incomeTab.addEventListener('click', () => switchTab('income'));
-            expenseTab.addEventListener('click', () => switchTab('expense'));
-            donationTab.addEventListener('click', () => switchTab('donation'));
-            listViewTab.addEventListener('click', () => { listViewTab.classList.add('active'); graphViewTab.classList.remove('active'); listViewContainer.classList.remove('hidden'); graphViewContainer.classList.add('hidden'); });
-            graphViewTab.addEventListener('click', () => { graphViewTab.classList.add('active'); listViewTab.classList.remove('active'); graphViewContainer.classList.remove('hidden'); listViewContainer.classList.add('hidden'); renderChart(); });
+            onTap(incomeTab, () => switchTab('income'));
+            onTap(expenseTab, () => switchTab('expense'));
+            onTap(goalTab, () => switchTab('goal'));
+            onTap(listViewTab, () => { listViewTab.classList.add('active'); graphViewTab.classList.remove('active'); listViewContainer.classList.remove('hidden'); graphViewContainer.classList.add('hidden'); });
+            onTap(graphViewTab, () => { graphViewTab.classList.add('active'); listViewTab.classList.remove('active'); graphViewContainer.classList.remove('hidden'); listViewContainer.classList.add('hidden'); renderChart(); });
             
             depositAmountInput.addEventListener('input', updateInterestPreview);
             depositPeriodInput.addEventListener('input', updateInterestPreview);
