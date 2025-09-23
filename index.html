@@ -56,7 +56,7 @@
                 <div class="flex border-b mb-4">
                     <button id="incomeTab" class="tab-button flex-1 p-2 font-bold rounded-t-lg active">💰 수입 (Income)</button>
                     <button id="expenseTab" class="tab-button flex-1 p-2 font-bold rounded-t-lg">💸 지출 (Expense)</button>
-                    <button id="donationTab" class="tab-button flex-1 p-2 font-bold rounded-t-lg">💖 기부 (Donation)</button>
+                    <button id="goalTab" class="tab-button flex-1 p-2 font-bold rounded-t-lg">🎯 목표 (Goals)</button>
                 </div>
 
                 <!-- 수입 폼 -->
@@ -104,20 +104,46 @@
                         </div>
                     </div>
                     <button type="submit" class="w-full bg-red-500 text-white font-bold p-3 rounded-lg hover:bg-red-600">지출 기록하기 (Add Expense)</button>
+                
+                    <hr class="my-6 border-t-2 border-dashed border-gray-200">
+
+                    <!-- 기부 폼 (통합) -->
+                    <div id="donationSection" class="mt-4">
+                         <h3 class="text-xl font-bold mb-4 text-center text-pink-600">💖 기부 (Donation) 💖</h3>
+                        <div class="mb-4">
+                            <label for="donationSource" class="font-bold">어디에 기부했나요? (To)</label>
+                            <input type="text" id="donationSource" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 유니세프 (e.g., UNICEF)">
+                        </div>
+                        <div class="mb-4">
+                            <label for="donationAmount" class="font-bold">얼마를 기부했나요? (Amount)</label>
+                            <input type="number" step="0.01" id="donationAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 1.00)">
+                        </div>
+                        <button type="button" id="addDonationButton" class="w-full bg-pink-500 text-white font-bold p-3 rounded-lg hover:bg-pink-600">기부 기록하기 (Add Donation)</button>
+                    </div>
                 </form>
 
-                <!-- 기부 폼 -->
-                <form id="donationForm" class="hidden">
-                    <div class="mb-4">
-                        <label for="donationSource" class="font-bold">어디에 기부했나요? (To)</label>
-                        <input type="text" id="donationSource" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 유니세프 (e.g., UNICEF)" required>
+                <!-- 목표 폼 -->
+                <div id="goalSection" class="hidden">
+                    <form id="goalForm">
+                        <p class="text-center text-sm mb-4">갖고 싶은 것을 정하고 돈을 모아봐요!<br>(Set a goal and save up for it!)</p>
+                        <div class="mb-3">
+                            <label for="goalItem" class="font-bold">목표 항목 (Item)</label>
+                            <input type="text" id="goalItem" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 레고 (e.g., LEGO)" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="goalAmount" class="font-bold">목표 금액 (Amount)</label>
+                            <input type="number" step="0.01" id="goalAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 75.00)" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="goalDate" class="font-bold">목표 날짜 (Target Date)</label>
+                            <input type="date" id="goalDate" class="w-full p-2 border rounded-lg mt-1" required>
+                        </div>
+                        <button type="submit" class="w-full bg-green-500 text-white font-bold p-3 rounded-lg hover:bg-green-600">목표 추가하기 (Add Goal)</button>
+                    </form>
+                    <div id="goalList" class="mt-4 space-y-2">
+                        <!-- 목표 내역 -->
                     </div>
-                    <div class="mb-4">
-                        <label for="donationAmount" class="font-bold">얼마를 기부했나요? (Amount)</label>
-                        <input type="number" step="0.01" id="donationAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 1.00)" required>
-                    </div>
-                    <button type="submit" class="w-full bg-pink-500 text-white font-bold p-3 rounded-lg hover:bg-pink-600">기부 기록하기 (Add Donation)</button>
-                </form>
+                </div>
             </div>
 
             <!-- 은행 및 설정 -->
@@ -139,33 +165,7 @@
                 <div id="depositList" class="mt-4 space-y-2">
                     <!-- 예금 내역 -->
                 </div>
-            </div>
-
-            <!-- 목표 (Wish List) -->
-            <div class="bg-white p-6 rounded-2xl shadow-lg">
-                <h3 class="text-xl font-bold mb-4 text-center text-green-600">🎯 목표 (Wish List) 🎯</h3>
-                <form id="goalForm" class="bg-green-50 p-4 rounded-lg">
-                    <p class="text-center text-sm mb-4">갖고 싶은 것을 정하고 돈을 모아봐요!<br>(Set a goal and save up for it!)</p>
-                    <div class="mb-3">
-                        <label for="goalItem" class="font-bold">목표 항목 (Item)</label>
-                        <input type="text" id="goalItem" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 레고 (e.g., LEGO)" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="goalAmount" class="font-bold">목표 금액 (Amount)</label>
-                        <input type="number" step="0.01" id="goalAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 75.00)" required>
-                    </div>
-                    <div class="mb-4">
-                        <label for="goalDate" class="font-bold">목표 날짜 (Target Date)</label>
-                        <input type="date" id="goalDate" class="w-full p-2 border rounded-lg mt-1" required>
-                    </div>
-                    <button type="submit" class="w-full bg-green-500 text-white font-bold p-3 rounded-lg hover:bg-green-600">목표 추가하기 (Add Goal)</button>
-                </form>
-                <div id="goalList" class="mt-4 space-y-2">
-                    <!-- 목표 내역 -->
-                </div>
-            </div>
-            
-            <!-- 거래 내역 -->
+            </div>            <!-- 거래 내역 -->
             <section class="mt-8 bg-white p-6 rounded-2xl shadow-lg md:col-span-2">
                 <div class="flex justify-center border-b mb-4">
                     <button id="listViewTab" class="view-tab flex-1 p-2 font-bold focus:outline-none active">📋 목록 (List)</button>
@@ -266,10 +266,10 @@
             
             const incomeTab = document.getElementById('incomeTab');
             const expenseTab = document.getElementById('expenseTab');
-            const donationTab = document.getElementById('donationTab');
+            const goalTab = document.getElementById('goalTab');
             const incomeSection = document.getElementById('incomeSection');
             const expenseForm = document.getElementById('expenseForm');
-            const donationForm = document.getElementById('donationForm');
+            const goalSection = document.getElementById('goalSection');
 
             const listViewTab = document.getElementById('listViewTab');
             const graphViewTab = document.getElementById('graphViewTab');
