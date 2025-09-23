@@ -311,10 +311,11 @@
 
                 const firstDate = new Date(sortedTx[0].date);
                 const currentDate = new Date();
+                const middleDate = new Date((firstDate.getTime() + currentDate.getTime()) / 2);
 
-                balancePoints.push({x: firstDate.getTime() - 1, y: 0});
-                cumulativeIncomePoints.push({x: firstDate.getTime() - 1, y: 0});
-                cumulativeExpensePoints.push({x: firstDate.getTime() - 1, y: 0});
+                balancePoints.push({x: firstDate.getTime(), y: 0});
+                cumulativeIncomePoints.push({x: firstDate.getTime(), y: 0});
+                cumulativeExpensePoints.push({x: firstDate.getTime(), y: 0});
 
                 sortedTx.forEach(tx => {
                     const txDate = new Date(tx.date);
@@ -361,16 +362,32 @@
                         scales: {
                             x: {
                                 type: 'time',
-                                min: firstDate,
-                                max: currentDate,
+                                min: firstDate.getTime(),
+                                max: currentDate.getTime(),
                                 time: {
                                     tooltipFormat: 'yyyy-MM-dd HH:mm',
                                     unit: 'day',
+                                    displayFormats: {
+                                        day: 'yy/MM/dd'
+                                    }
+                                },
+                                ticks: {
+                                    source: 'auto',
+                                    maxTicksLimit: 3,
+                                    callback: function(value, index, ticks) {
+                                        // To show only first, middle, and last date
+                                        if (index === 0 || index === Math.floor((ticks.length -1) / 2) || index === ticks.length - 1) {
+                                            return new Date(value).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' });
+                                        }
+                                        return '';
+                                    },
+                                    maxRotation: 0,
+                                    minRotation: 0
                                 },
                                 title: { display: true, text: '시간 (Time)' }
                             },
                             y: {
-                                beginAtZero: true,
+                                beginAtZero: false,
                                 ticks: { callback: (value) => '$' + value.toFixed(2) }
                             }
                         },
