@@ -143,6 +143,10 @@
                     <div id="goalList" class="mt-4 space-y-2">
                         <!-- 목표 내역 -->
                     </div>
+                    <div class="mt-6">
+                        <h4 class="text-lg font-bold text-center text-green-700 mb-2">📒 목표 로그 (Goal Logs)</h4>
+                        <ul id="goalLogsList" class="space-y-2"></ul>
+                    </div>
                 </div>
             </div>
 
@@ -295,6 +299,8 @@
             const amountForm = document.getElementById('amountForm');
             const amountInput = document.getElementById('amountInput');
             const closeAmountModalButton = document.getElementById('closeAmountModalButton');
+            // Track which action triggered password flow
+            let pendingAction = null; // 'resetAndSetInitial' | null
 
 
             let state = {
@@ -304,16 +310,39 @@
                 deposits: [],
                 allowance: { amount: 0, lastGiven: null },
                 donations: [],
-                goals: []
+                goals: [],
+                goalLogs: []
             };
 
             function loadData() {
                 const savedState = localStorage.getItem('piggyBankState');
                 if (savedState) { state = JSON.parse(savedState); }
+                // Backward compatibility defaults
+                if (!state.goalLogs) state.goalLogs = [];
+                if (!state.allowance) state.allowance = { amount: 0, lastGiven: null };
+                if (!state.donations) state.donations = [];
+                if (!state.goals) state.goals = [];
+                if (!state.transactions) state.transactions = [];
+                if (!state.deposits) state.deposits = [];
             }
 
             function saveData() {
                 localStorage.setItem('piggyBankState', JSON.stringify(state));
+            }
+
+            function resetAllData() {
+                state = {
+                    balance: 0,
+                    evaluationScore: 0,
+                    transactions: [],
+                    deposits: [],
+                    allowance: { amount: 0, lastGiven: null },
+                    donations: [],
+                    goals: [],
+                    goalLogs: []
+                };
+                saveData();
+                render();
             }
 
             function renderChart() {
@@ -495,7 +524,7 @@
                     depositListEl.appendChild(li);
                 });
 
-                if (graphViewContainer.style.display !== 'hidden') {
+                if (!graphViewContainer.classList.contains('hidden')) {
                     renderChart();
                 }
 
@@ -514,9 +543,29 @@
                                     </div>
                                     <div class="text-right">
                                         <span class="font-bold ${isAchieved ? 'text-green-600' : 'text-red-600'}">$${goal.amount.toFixed(2)}</span>
-                                        ${isAchieved ? '' : `<button data-index="${index}" class="achieve-btn text-xs text-blue-500 hover:underline ml-2">달성하기 (Achieve)</button>`}`;
+                                        ${isAchieved ? '' : `<button data-index="${index}" class="achieve-btn text-xs text-blue-500 hover:underline ml-2">달성하기 (Achieve)</button>`}
+                                        <button data-index="${index}" class="delete-btn text-xs text-gray-500 hover:underline ml-2">삭제 (Delete)</button>`;
                     goalListEl.appendChild(li);
                 });
+
+                // Render goal logs
+                const goalLogsListEl = document.getElementById('goalLogsList');
+                if (goalLogsListEl) {
+                    goalLogsListEl.innerHTML = '';
+                    if (!state.goalLogs.length) {
+                        goalLogsListEl.innerHTML = '<li class="text-center text-gray-400 p-2">No goal logs yet.</li>';
+                    } else {
+                        [...state.goalLogs].slice().reverse().forEach(log => {
+                            const li = document.createElement('li');
+                            li.className = 'bg-green-100 p-2 rounded';
+                            const when = new Date(log.timestamp).toLocaleString('ko-KR', { year:'2-digit', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false });
+                            const typeLabel = log.type === 'add' ? '추가' : log.type === 'achieve' ? '달성' : '삭제';
+                            const dateStr = log.targetDate ? ` / 목표일: ${new Date(log.targetDate).toLocaleDateString('ko-KR')}` : '';
+                            li.textContent = `[${typeLabel}] ${log.item} - $${Number(log.amount).toFixed(2)}${dateStr} / ${when}`;
+                            goalLogsListEl.appendChild(li);
+                        });
+                    }
+                }
             }
 
             function checkAllowance() {
@@ -625,7 +674,9 @@
             }
 
             onTap(balanceDisplayContainer, () => {
+                pendingAction = 'resetAndSetInitial';
                 passwordModal.classList.remove('hidden');
+                passwordInput.value = '';
                 passwordInput.focus();
             });
 
@@ -633,6 +684,7 @@
                 passwordModal.classList.add('hidden');
                 passwordInput.value = '';
                 adminActions.classList.add('hidden');
+                pendingAction = null;
             });
 
             passwordForm.addEventListener('submit', (e) => {
@@ -641,8 +693,25 @@
                 const correctPassword = 'Wjsdbfk!2';
 
                 if (password === correctPassword) {
-                    passwordForm.classList.add('hidden');
-                    adminActions.classList.remove('hidden');
+                    if (pendingAction === 'resetAndSetInitial') {
+                        const proceed = confirm('모든 데이터를 초기화한 후, 초기 잔액을 설정합니다. 계속하시겠습니까?\n(This will reset all data, then set the initial balance.)');
+                        if (proceed) {
+                            resetAllData();
+                            // Show amount modal to set initial balance
+                            passwordModal.classList.add('hidden');
+                            adminActions.classList.add('hidden');
+                            amountModal.classList.remove('hidden');
+                            amountInput.focus();
+                        } else {
+                            // If canceled, show admin actions instead
+                            passwordForm.classList.add('hidden');
+                            adminActions.classList.remove('hidden');
+                        }
+                        pendingAction = null;
+                    } else {
+                        passwordForm.classList.add('hidden');
+                        adminActions.classList.remove('hidden');
+                    }
                 } else {
                     alert('암호가 틀렸습니다. (Incorrect password.)');
                     passwordInput.value = '';
@@ -686,7 +755,14 @@
                     try {
                         const importedState = JSON.parse(e.target.result);
                         if (confirm('정말로 데이터를 가져오시겠습니까? 현재 데이터는 사라집니다.\n(Are you sure you want to import data? Current data will be overwritten.)')) {
-                            state = importedState;
+                            state = importedState || {};
+                            // Backward compatibility defaults after import
+                            if (!state.goalLogs) state.goalLogs = [];
+                            if (!state.allowance) state.allowance = { amount: 0, lastGiven: null };
+                            if (!state.donations) state.donations = [];
+                            if (!state.goals) state.goals = [];
+                            if (!state.transactions) state.transactions = [];
+                            if (!state.deposits) state.deposits = [];
                             saveData();
                             render();
                             alert('데이터를 성공적으로 가져왔습니다! (Data imported successfully!)');
@@ -743,6 +819,8 @@
 
                 if (item && amount > 0 && date) {
                     state.goals.push({ item, amount, date });
+                    // Log goal addition
+                    state.goalLogs.push({ type: 'add', item, amount, targetDate: date, timestamp: new Date().toISOString() });
                     saveData();
                     render();
                     e.target.reset();
@@ -757,12 +835,24 @@
                     if (state.balance >= goal.amount) {
                         state.balance -= goal.amount;
                         state.transactions.push({ type: 'expense', source: `목표 달성 (${goal.item})`, amount: goal.amount, date: new Date().toISOString() });
+                        // Log goal achievement
+                        state.goalLogs.push({ type: 'achieve', item: goal.item, amount: goal.amount, targetDate: goal.date, timestamp: new Date().toISOString() });
                         state.goals.splice(index, 1);
                         saveData();
                         render();
                         alert(`목표 '${goal.item}' 달성! (${goal.amount} 사용됨)`);
                     } else {
                         alert('잔액이 부족합니다! (Insufficient balance!)');
+                    }
+                } else if (e.target.classList.contains('delete-btn')) {
+                    const index = parseInt(e.target.dataset.index);
+                    const goal = state.goals[index];
+                    if (confirm(`정말로 목표 '${goal.item}'을(를) 삭제하시겠습니까?`)) {
+                        // Log goal deletion
+                        state.goalLogs.push({ type: 'delete', item: goal.item, amount: goal.amount, targetDate: goal.date, timestamp: new Date().toISOString() });
+                        state.goals.splice(index, 1);
+                        saveData();
+                        render();
                     }
                 }
             });
