@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>유라의 가계부 (Yura's Piggy Bank)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .tab-button.active {
+            background-color: #3B82F6;
+            color: white;
+        }
+        .view-tab.active {
+            border-bottom: 3px solid #3B82F6;
+            color: #3B82F6;
+        }
+    </style>
+</head>
+<body class="bg-blue-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-6xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-blue-600">🐷 유라의 가계부 (Yura's Piggy Bank) 🐷</h1>
+            <p class="text-gray-500 mt-2">스스로 용돈을 관리하고 멋진 소비 습관을 길러봐요! (Manage your allowance and build great spending habits!)</p>
+        </header>
+
+        <!-- 잔액 및 요약 -->
+        <section class="bg-white p-6 rounded-2xl shadow-lg mb-8 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div id="balanceDisplayContainer" class="cursor-pointer" title="초기 잔액 설정하기 (Set initial balance)">
+                <h2 class="text-sm font-bold text-gray-500">현재 잔액 (Balance)</h2>
+                <p id="balance" class="text-2xl font-bold text-blue-600">$0.00</p>
+            </div>
+            <div>
+                <h2 class="text-sm font-bold text-gray-500">소비 점수 (Score)</h2>
+                <p id="evaluationScore" class="text-2xl font-bold text-green-500">0</p>
+            </div>
+            <div>
+                <h2 class="text-sm font-bold text-gray-500">은행 예금 (Savings)</h2>
+                <p id="bankBalance" class="text-2xl font-bold text-indigo-500">$0.00</p>
+            </div>
+            <div>
+                <h2 class="text-sm font-bold text-gray-500">총 기부액 (Donations)</h2>
+                <p id="totalDonation" class="text-2xl font-bold text-pink-500">$0.00</p>
+            </div>
+        </section>
+
+        <main class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- 입력 폼 -->
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <div class="flex border-b mb-4">
+                    <button id="incomeTab" class="tab-button flex-1 p-2 font-bold rounded-t-lg active">💰 수입 (Income)</button>
+                    <button id="expenseTab" class="tab-button flex-1 p-2 font-bold rounded-t-lg">💸 지출 (Expense)</button>
+                    <button id="donationTab" class="tab-button flex-1 p-2 font-bold rounded-t-lg">💖 기부 (Donation)</button>
+                </div>
+
+                <!-- 수입 폼 -->
+                <div id="incomeSection">
+                    <form id="incomeForm">
+                        <div class="mb-4">
+                            <label for="incomeSource" class="font-bold">어디서 생긴 돈인가요? (Source)</label>
+                            <input type="text" id="incomeSource" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 할머니 용돈 (e.g., From Grandma)" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="incomeAmount" class="font-bold">얼마인가요? (Amount)</label>
+                            <input type="number" step="0.01" id="incomeAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 10.50)" required>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-500 text-white font-bold p-3 rounded-lg hover:bg-blue-600">수입 기록하기 (Add Income)</button>
+                    </form>
+                    <hr class="my-6">
+                    <div id="allowanceSection">
+                        <h3 class="text-xl font-bold mb-4 text-center text-yellow-600">⚙️ 용돈 설정 (Allowance) ⚙️</h3>
+                        <div class="bg-yellow-50 p-4 rounded-lg">
+                            <div class="mb-4">
+                                <label for="allowanceAmount" class="font-bold">매주 받을 용돈 (Weekly Allowance)</label>
+                                <input type="number" step="0.01" id="allowanceAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 5.00)">
+                            </div>
+                            <button id="setAllowanceButton" class="w-full bg-yellow-500 text-white font-bold p-3 rounded-lg hover:bg-yellow-600">용돈 설정하기 (Set Allowance)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 지출 폼 -->
+                <form id="expenseForm" class="hidden">
+                    <div class="mb-4">
+                        <label for="expenseSource" class="font-bold">어디에 쓴 돈인가요? (Source)</label>
+                        <input type="text" id="expenseSource" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 문구점 (e.g., Stationery Store)" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="expenseAmount" class="font-bold">얼마인가요? (Amount)</label>
+                        <input type="number" step="0.01" id="expenseAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 2.75)" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="font-bold">어떤 지출이었나요? (Evaluation)</label>
+                        <div class="flex justify-around mt-2">
+                            <label class="text-center cursor-pointer"><input type="radio" name="evaluation" value="3" class="mr-1" checked>🤔 계획 (Planned)<br>(+3 pts)</label>
+                            <label class="text-center cursor-pointer"><input type="radio" name="evaluation" value="0" class="mr-1">🏠 고정 (Fixed)<br>(0 pts)</label>
+                            <label class="text-center cursor-pointer"><input type="radio" name="evaluation" value="-3" class="mr-1">😲 충동 (Impulse)<br>(-3 pts)</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-red-500 text-white font-bold p-3 rounded-lg hover:bg-red-600">지출 기록하기 (Add Expense)</button>
+                </form>
+
+                <!-- 기부 폼 -->
+                <form id="donationForm" class="hidden">
+                    <div class="mb-4">
+                        <label for="donationSource" class="font-bold">어디에 기부했나요? (To)</label>
+                        <input type="text" id="donationSource" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 유니세프 (e.g., UNICEF)" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="donationAmount" class="font-bold">얼마를 기부했나요? (Amount)</label>
+                        <input type="number" step="0.01" id="donationAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 1.00)" required>
+                    </div>
+                    <button type="submit" class="w-full bg-pink-500 text-white font-bold p-3 rounded-lg hover:bg-pink-600">기부 기록하기 (Add Donation)</button>
+                </form>
+            </div>
+
+            <!-- 은행 및 설정 -->
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-bold mb-4 text-center text-indigo-600">🏦 저축 은행 (Savings Bank) 🏦</h3>
+                <div class="bg-indigo-50 p-4 rounded-lg">
+                    <p class="text-center">돈을 맡기면 이자가 붙어요! (매일 1%)<br>(Earn interest on your deposits! 1% per day)</p>
+                    <div class="my-4">
+                        <label for="depositAmount" class="font-bold">맡길 금액 (Deposit Amount)</label>
+                        <input type="number" step="0.01" id="depositAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 50.00)">
+                    </div>
+                    <div class="mb-4">
+                        <label for="depositPeriod" class="font-bold">맡길 기간 (일) (Period in Days)</label>
+                        <input type="number" id="depositPeriod" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 30 (e.g., 30)">
+                    </div>
+                    <p id="interestPreview" class="text-center mb-4 font-bold text-indigo-600 min-h-[1.5rem]"></p>
+                    <button id="depositButton" class="w-full bg-indigo-500 text-white font-bold p-3 rounded-lg hover:bg-indigo-600">은행에 돈 맡기기 (Deposit)</button>
+                </div>
+                <div id="depositList" class="mt-4 space-y-2">
+                    <!-- 예금 내역 -->
+                </div>
+            </div>
+            
+            <!-- 거래 내역 -->
+            <section class="mt-8 bg-white p-6 rounded-2xl shadow-lg md:col-span-2">
+                <div class="flex justify-center border-b mb-4">
+                    <button id="listViewTab" class="view-tab flex-1 p-2 font-bold focus:outline-none active">📋 목록 (List)</button>
+                    <button id="graphViewTab" class="view-tab flex-1 p-2 font-bold focus:outline-none">📊 그래프 (Graph)</button>
+                </div>
+
+                <!-- 목록 보기 -->
+                <div id="listViewContainer">
+                    <h3 class="text-xl font-bold mb-4 text-center">💰 돈의 흐름 (Cash Flow) 💸</h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <h4 class="text-lg font-bold text-center text-blue-600 mb-2">수입 (Income)</h4>
+                            <ul id="incomeList" class="space-y-2"></ul>
+                            <div class="mt-2 pt-2 border-t font-bold text-right">
+                                총 수입: <span id="totalIncome" class="text-blue-600">$0.00</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-center text-red-600 mb-2">지출 및 기부 (Expenses)</h4>
+                            <ul id="expenseList" class="space-y-2"></ul>
+                             <div class="mt-2 pt-2 border-t font-bold text-right">
+                                총 지출: <span id="totalExpense" class="text-red-600">$0.00</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col">
+                            <h4 class="text-lg font-bold text-center text-gray-700 mb-2">남은 돈 (Net)</h4>
+                            <div id="balanceSheet" class="flex flex-col items-center justify-center flex-grow bg-gray-100 rounded-lg">
+                                <p id="balanceSheetAmount" class="text-2xl font-bold text-purple-600">$0.00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 그래프 보기 -->
+                <div id="graphViewContainer" class="hidden">
+                     <h3 class="text-xl font-bold mb-4 text-center">📈 돈의 흐름 그래프 (Cash Flow Graph) 📉</h3>
+                    <div class="h-80">
+                        <canvas id="transactionChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Password Modal -->
+    <div id="passwordModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm mx-4">
+            <h2 class="text-2xl font-bold mb-4 text-center">관리자 메뉴 (Admin Menu)</h2>
+            <form id="passwordForm">
+                <input type="password" id="passwordInput" class="w-full p-3 border rounded-lg" placeholder="Password" required>
+                <div class="flex justify-between mt-6">
+                    <button type="button" id="closePasswordModalButton" class="bg-gray-300 text-gray-800 font-bold p-3 rounded-lg w-1/2 mr-2 hover:bg-gray-400">닫기 (Close)</button>
+                    <button type="submit" class="bg-blue-500 text-white font-bold p-3 rounded-lg w-1/2 ml-2 hover:bg-blue-600">확인 (Submit)</button>
+                </div>
+            </form>
+            <div id="adminActions" class="hidden mt-6">
+                <h3 class="text-xl font-bold mb-4 text-center border-t pt-4">데이터 관리 (Data Management)</h3>
+                <p class="text-center text-sm text-gray-600 mb-4">데이터를 파일로 저장하거나, 파일에서 불러올 수 있습니다.<br>(You can save data to a file or load it from a file.)</p>
+                <div class="flex flex-col space-y-3">
+                    <button id="setInitialBalanceBtn" class="w-full bg-green-500 text-white font-bold p-3 rounded-lg hover:bg-green-600">초기 잔액 설정 (Set Initial Balance)</button>
+                    <button id="exportDataBtn" class="w-full bg-purple-500 text-white font-bold p-3 rounded-lg hover:bg-purple-600">데이터 내보내기 (Export Data)</button>
+                    <button id="importDataBtn" class="w-full bg-orange-500 text-white font-bold p-3 rounded-lg hover:bg-orange-600">데이터 가져오기 (Import Data)</button>
+                    <input type="file" id="importFile" class="hidden" accept=".json">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Amount Modal -->
+    <div id="amountModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm mx-4">
+            <h2 class="text-2xl font-bold mb-4 text-center">초기 잔액 입력 (Enter Initial Balance)</h2>
+            <form id="amountForm">
+                <input type="number" step="0.01" id="amountInput" class="w-full p-3 border rounded-lg" placeholder="금액 (e.g., 100.00)" required>
+                <div class="flex justify-between mt-6">
+                    <button type="button" id="closeAmountModalButton" class="bg-gray-300 text-gray-800 font-bold p-3 rounded-lg w-1/2 mr-2 hover:bg-gray-400">닫기 (Close)</button>
+                    <button type="submit" class="bg-green-500 text-white font-bold p-3 rounded-lg w-1/2 ml-2 hover:bg-green-600">설정 (Set)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let transactionChartInstance = null;
+
+            // UI Elements
+            const balanceEl = document.getElementById('balance');
+            const evaluationScoreEl = document.getElementById('evaluationScore');
+            const bankBalanceEl = document.getElementById('bankBalance');
+            const totalDonationEl = document.getElementById('totalDonation');
+            const depositListEl = document.getElementById('depositList');
+            const incomeListEl = document.getElementById('incomeList');
+            const expenseListEl = document.getElementById('expenseList');
+            const totalIncomeEl = document.getElementById('totalIncome');
+            const totalExpenseEl = document.getElementById('totalExpense');
+            const balanceSheetAmountEl = document.getElementById('balanceSheetAmount');
+            
+            const incomeTab = document.getElementById('incomeTab');
+            const expenseTab = document.getElementById('expenseTab');
+            const donationTab = document.getElementById('donationTab');
+            const incomeSection = document.getElementById('incomeSection');
+            const expenseForm = document.getElementById('expenseForm');
+            const donationForm = document.getElementById('donationForm');
+
+            const listViewTab = document.getElementById('listViewTab');
+            const graphViewTab = document.getElementById('graphViewTab');
+            const listViewContainer = document.getElementById('listViewContainer');
+            const graphViewContainer = document.getElementById('graphViewContainer');
+            
+            const depositAmountInput = document.getElementById('depositAmount');
+            const depositPeriodInput = document.getElementById('depositPeriod');
+            const interestPreviewEl = document.getElementById('interestPreview');
+
+            const balanceDisplayContainer = document.getElementById('balanceDisplayContainer');
+            const passwordModal = document.getElementById('passwordModal');
+            const passwordForm = document.getElementById('passwordForm');
+            const passwordInput = document.getElementById('passwordInput');
+            const closePasswordModalButton = document.getElementById('closePasswordModalButton');
+            const adminActions = document.getElementById('adminActions');
+            const setInitialBalanceBtn = document.getElementById('setInitialBalanceBtn');
+            const exportDataBtn = document.getElementById('exportDataBtn');
+            const importDataBtn = document.getElementById('importDataBtn');
+            const importFile = document.getElementById('importFile');
+
+            const amountModal = document.getElementById('amountModal');
+            const amountForm = document.getElementById('amountForm');
+            const amountInput = document.getElementById('amountInput');
+            const closeAmountModalButton = document.getElementById('closeAmountModalButton');
+
+
+            let state = {
+                balance: 0,
+                evaluationScore: 0,
+                transactions: [],
+                deposits: [],
+                allowance: { amount: 0, lastGiven: null },
+                donations: []
+            };
+
+            function loadData() {
+                const savedState = localStorage.getItem('piggyBankState');
+                if (savedState) { state = JSON.parse(savedState); }
+            }
+
+            function saveData() {
+                localStorage.setItem('piggyBankState', JSON.stringify(state));
+            }
+
+            function renderChart() {
+                if (transactionChartInstance) { transactionChartInstance.destroy(); }
+                
+                const sortedTx = [...state.transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+                if (sortedTx.length === 0) {
+                    graphViewContainer.innerHTML = `<h3 class="text-xl font-bold mb-4 text-center">📈 돈의 흐름 그래프 (Cash Flow Graph) 📉</h3><p class="text-center text-gray-500 mt-10">기록이 없어 그래프를 그릴 수 없어요. (No data to display.)</p>`;
+                    return;
+                }
+                graphViewContainer.innerHTML = `<h3 class="text-xl font-bold mb-4 text-center">📈 돈의 흐름 그래프 (Cash Flow Graph) 📉</h3><div class="h-80"><canvas id="transactionChart"></canvas></div>`;
+
+                const balancePoints = [];
+                const cumulativeIncomePoints = [];
+                const cumulativeExpensePoints = [];
+                
+                let runningBalance = 0;
+                let runningIncome = 0;
+                let runningExpense = 0;
+
+                const firstDate = new Date(sortedTx[0].date);
+                const currentDate = new Date();
+
+                balancePoints.push({x: firstDate.getTime() - 1, y: 0});
+                cumulativeIncomePoints.push({x: firstDate.getTime() - 1, y: 0});
+                cumulativeExpensePoints.push({x: firstDate.getTime() - 1, y: 0});
+
+                sortedTx.forEach(tx => {
+                    const txDate = new Date(tx.date);
+                    if (tx.type === 'income') {
+                        runningBalance += tx.amount;
+                        runningIncome += tx.amount;
+                    } else {
+                        runningBalance -= tx.amount;
+                        runningExpense += tx.amount;
+                    }
+                    balancePoints.push({ x: txDate, y: runningBalance });
+                    cumulativeIncomePoints.push({ x: txDate, y: runningIncome });
+                    cumulativeExpensePoints.push({ x: txDate, y: runningExpense });
+                });
+
+                const ctx = document.getElementById('transactionChart').getContext('2d');
+                transactionChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: '잔액 (Balance)',
+                            data: balancePoints,
+                            borderColor: '#9333EA',
+                            backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                            fill: true,
+                            tension: 0.1,
+                        }, {
+                            label: '누적 수입 (Total Income)',
+                            data: cumulativeIncomePoints,
+                            borderColor: '#3B82F6',
+                            fill: false,
+                            tension: 0.1,
+                        }, {
+                            label: '누적 지출 (Total Expense)',
+                            data: cumulativeExpensePoints,
+                            borderColor: '#EF4444',
+                            fill: false,
+                            tension: 0.1,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                type: 'time',
+                                min: firstDate,
+                                max: currentDate,
+                                time: {
+                                    tooltipFormat: 'yyyy-MM-dd HH:mm',
+                                    unit: 'day',
+                                },
+                                title: { display: true, text: '시간 (Time)' }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: { callback: (value) => '$' + value.toFixed(2) }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: { label: (context) => `${context.dataset.label}: $${context.parsed.y.toFixed(2)}` }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function render() {
+                balanceEl.textContent = `$${state.balance.toFixed(2)}`;
+                evaluationScoreEl.textContent = `${state.evaluationScore}`;
+                const totalBankBalance = state.deposits.reduce((sum, d) => sum + d.amount, 0);
+                bankBalanceEl.textContent = `$${totalBankBalance.toFixed(2)}`;
+                const totalDonationAmount = state.donations.reduce((sum, d) => sum + d.amount, 0);
+                totalDonationEl.textContent = `$${totalDonationAmount.toFixed(2)}`;
+
+                if(state.evaluationScore > 0) evaluationScoreEl.className = 'text-2xl font-bold text-green-500';
+                else if(state.evaluationScore < 0) evaluationScoreEl.className = 'text-2xl font-bold text-red-500';
+                else evaluationScoreEl.className = 'text-2xl font-bold text-gray-500';
+
+                incomeListEl.innerHTML = '';
+                expenseListEl.innerHTML = '';
+                
+                let totalIncome = 0, totalExpense = 0;
+                state.transactions.filter(tx => tx.type === 'income').forEach(tx => totalIncome += tx.amount);
+                state.transactions.filter(tx => tx.type !== 'income').forEach(tx => totalExpense += tx.amount);
+
+                [...state.transactions].reverse().forEach(tx => {
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center p-2 rounded-lg text-sm';
+                    const date = new Date(tx.date).toLocaleString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+                    
+                    if (tx.type === 'income') {
+                        li.classList.add('bg-blue-50');
+                        li.innerHTML = `<div><span class="font-bold">${tx.source}</span><span class="text-xs text-gray-500 ml-1">${date}</span></div><span class="font-bold text-blue-600">+$${tx.amount.toFixed(2)}</span>`;
+                        incomeListEl.appendChild(li);
+                    } else {
+                        if (tx.type === 'expense') {
+                             li.classList.add('bg-red-50');
+                            const scoreText = tx.score > 0 ? `+${tx.score}` : tx.score;
+                            const scoreColor = tx.score > 0 ? 'text-green-600' : tx.score < 0 ? 'text-red-600' : 'text-gray-500';
+                            li.innerHTML = `<div><span class="font-bold">${tx.source}</span><span class="text-xs text-gray-500 ml-1">${date}</span></div><div class="text-right"><span class="font-bold text-red-600">-$${tx.amount.toFixed(2)}</span><span class="text-xs ${scoreColor} block">(${scoreText} pts)</span></div>`;
+                        } else { // Donation
+                            li.classList.add('bg-pink-50');
+                            li.innerHTML = `<div><span class="font-bold">${tx.source}</span><span class="text-xs text-gray-500 ml-1">${date}</span></div><span class="font-bold text-pink-600">-$${tx.amount.toFixed(2)}</span>`;
+                        }
+                        expenseListEl.appendChild(li);
+                    }
+                });
+
+                if (incomeListEl.children.length === 0) incomeListEl.innerHTML = `<li class="text-center text-gray-400 text-sm p-2">No income yet.</li>`;
+                if (expenseListEl.children.length === 0) expenseListEl.innerHTML = `<li class="text-center text-gray-400 text-sm p-2">No expenses yet.</li>`;
+
+                totalIncomeEl.textContent = `$${totalIncome.toFixed(2)}`;
+                totalExpenseEl.textContent = `$${totalExpense.toFixed(2)}`;
+                balanceSheetAmountEl.textContent = `$${(totalIncome - totalExpense).toFixed(2)}`;
+                
+                depositListEl.innerHTML = '';
+                state.deposits.forEach((deposit, index) => {
+                    const li = document.createElement('div');
+                    li.className = 'bg-indigo-100 p-3 rounded-lg text-sm';
+                    const maturityDate = new Date(deposit.maturityDate);
+                    const isMatured = new Date() >= maturityDate;
+                    
+                    const depositDate = new Date(deposit.depositDate);
+                    const elapsedMillis = Math.max(0, new Date().getTime() - depositDate.getTime());
+                    const elapsedDays = elapsedMillis / (1000 * 60 * 60 * 24);
+                    let currentInterest = deposit.amount * 0.01 * elapsedDays;
+                    currentInterest = Math.min(currentInterest, deposit.interest);
+
+                    li.innerHTML = `<p><span class="font-bold">$${deposit.amount.toFixed(2)}</span> deposited.</p>
+                                    <p class="text-xs">만기일 (Maturity): ${maturityDate.toLocaleDateString('en-US')}</p>
+                                    <p class="text-xs">현재 이자 (Current): $${currentInterest.toFixed(2)}</p>
+                                    <p class="text-xs">만기 이자 (Total): $${deposit.interest.toFixed(2)}</p>
+                                    <button data-index="${index}" class="claim-btn w-full mt-2 p-1 rounded-lg text-white font-bold ${isMatured ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'}" ${!isMatured ? 'disabled' : ''}>${isMatured ? '찾기 (Withdraw)' : '기다리는 중 (Waiting)'}</button>`;
+                    depositListEl.appendChild(li);
+                });
+
+                if (graphViewContainer.style.display !== 'hidden') {
+                    renderChart();
+                }
+            }
+
+            function checkAllowance() {
+                if (state.allowance.amount <= 0) return;
+                const now = new Date();
+                const lastGivenDate = state.allowance.lastGiven ? new Date(state.allowance.lastGiven) : null;
+                if (!lastGivenDate) { giveAllowance(); return; }
+                const oneWeek = 7 * 24 * 60 * 60 * 1000;
+                if (now.getTime() - lastGivenDate.getTime() >= oneWeek) giveAllowance();
+            }
+            
+            function giveAllowance() {
+                const amount = Number(state.allowance.amount);
+                state.balance += amount;
+                state.transactions.push({ type: 'income', source: '주간 용돈 (Weekly Allowance)', amount, date: new Date().toISOString() });
+                state.allowance.lastGiven = new Date().toISOString();
+                alert(`Weekly allowance of $${amount.toFixed(2)} received!`);
+                saveData();
+                render();
+            }
+
+            function switchTab(activeTab) {
+                [incomeTab, expenseTab, donationTab].forEach(tab => tab.classList.remove('active'));
+                [incomeSection, expenseForm, donationForm].forEach(form => form.classList.add('hidden'));
+                if(activeTab === 'income') { incomeTab.classList.add('active'); incomeSection.classList.remove('hidden'); } 
+                else if (activeTab === 'expense') { expenseTab.classList.add('active'); expenseForm.classList.remove('hidden'); } 
+                else { donationTab.classList.add('active'); donationForm.classList.remove('hidden'); }
+            }
+            
+            function updateInterestPreview() {
+                const amount = parseFloat(depositAmountInput.value) || 0;
+                const period = parseInt(depositPeriodInput.value) || 0;
+                if (amount > 0 && period > 0) {
+                    const interest = amount * 0.01 * period;
+                    interestPreviewEl.textContent = `만기 시 총 예상 이자 (Total Est. Interest): $${interest.toFixed(2)}`;
+                } else {
+                    interestPreviewEl.textContent = '';
+                }
+            }
+
+            document.getElementById('incomeForm').addEventListener('submit', (e) => { e.preventDefault(); const source = document.getElementById('incomeSource').value; const amount = parseFloat(document.getElementById('incomeAmount').value); if (source && amount > 0) { state.balance += amount; state.transactions.push({ type: 'income', source, amount, date: new Date().toISOString() }); saveData(); render(); e.target.reset(); } });
+            expenseForm.addEventListener('submit', (e) => { e.preventDefault(); const source = document.getElementById('expenseSource').value; const amount = parseFloat(document.getElementById('expenseAmount').value); const score = parseInt(document.querySelector('input[name="evaluation"]:checked').value); if (source && amount > 0 && state.balance >= amount) { state.balance -= amount; state.evaluationScore += score; state.transactions.push({ type: 'expense', source, amount, score, date: new Date().toISOString() }); saveData(); render(); e.target.reset(); } else if (state.balance < amount) { alert('Not enough money!'); } });
+            donationForm.addEventListener('submit', (e) => { e.preventDefault(); const source = document.getElementById('donationSource').value; const amount = parseFloat(document.getElementById('donationAmount').value); if(source && amount > 0 && state.balance >= amount) { state.balance -= amount; state.donations.push({ source, amount, date: new Date().toISOString() }); state.transactions.push({ type: 'donation', source: `Donated to ${source}`, amount, date: new Date().toISOString() }); saveData(); render(); e.target.reset(); switchTab('income'); alert('Thank you for your warm heart!'); } else if (state.balance < amount) { alert('Not enough money!'); } });
+            document.getElementById('setAllowanceButton').addEventListener('click', () => { const amount = document.getElementById('allowanceAmount').value; if (amount && Number(amount) >= 0) { state.allowance.amount = Number(amount); saveData(); alert(`Weekly allowance set to $${Number(amount).toFixed(2)}!`); checkAllowance(); } });
+            
+            document.getElementById('depositButton').addEventListener('click', () => { 
+                const amount = parseFloat(depositAmountInput.value); 
+                const period = parseInt(depositPeriodInput.value); 
+                if (amount > 0 && period > 0 && state.balance >= amount) { 
+                    state.balance -= amount; 
+                    const maturityDate = new Date(); 
+                    maturityDate.setDate(maturityDate.getDate() + period); 
+                    const interest = amount * 0.01 * period;
+                    state.deposits.push({ amount, period, interest, depositDate: new Date().toISOString(), maturityDate: maturityDate.toISOString() }); 
+                    saveData(); 
+                    render(); 
+                    depositAmountInput.value = ''; 
+                    depositPeriodInput.value = ''; 
+                    updateInterestPreview();
+                } else if (state.balance < amount) { alert('Not enough money!'); } 
+            });
+
+            depositListEl.addEventListener('click', (e) => { 
+                if(e.target.classList.contains('claim-btn')) { 
+                    const index = parseInt(e.target.dataset.index); 
+                    const deposit = state.deposits[index]; 
+                    const maturityDate = new Date(deposit.maturityDate); 
+                    if(new Date() >= maturityDate) { 
+                        const totalReturn = deposit.amount + deposit.interest; 
+                        state.balance += totalReturn; 
+                        state.transactions.push({ type: 'income', source: '은행 예금 찾기 (Bank Withdrawal)', amount: totalReturn, date: new Date().toISOString() }); 
+                        state.deposits.splice(index, 1); 
+                        saveData(); 
+                        render(); 
+                        alert(`Principal of $${deposit.amount.toFixed(2)} and interest of $${deposit.interest.toFixed(2)} returned!`); 
+                    } 
+                } 
+            });
+
+            balanceDisplayContainer.addEventListener('click', () => {
+                passwordModal.classList.remove('hidden');
+                passwordInput.focus();
+            });
+
+            closePasswordModalButton.addEventListener('click', () => {
+                passwordModal.classList.add('hidden');
+                passwordInput.value = '';
+                adminActions.classList.add('hidden');
+            });
+
+            passwordForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const password = passwordInput.value;
+                const correctPassword = 'Wjsdbfk!2';
+
+                if (password === correctPassword) {
+                    passwordForm.classList.add('hidden');
+                    adminActions.classList.remove('hidden');
+                } else {
+                    alert('암호가 틀렸습니다. (Incorrect password.)');
+                    passwordInput.value = '';
+                }
+            });
+
+            setInitialBalanceBtn.addEventListener('click', () => {
+                const initialBalanceSet = state.transactions.some(tx => tx.source === '초기 잔액 (Initial Balance)');
+                if (initialBalanceSet) {
+                    alert('초기 잔액은 한 번만 설정할 수 있습니다. (Initial balance can only be set once.)');
+                } else {
+                    passwordModal.classList.add('hidden');
+                    amountModal.classList.remove('hidden');
+                    amountInput.focus();
+                }
+            });
+
+            exportDataBtn.addEventListener('click', () => {
+                const dataStr = JSON.stringify(state, null, 2);
+                const dataBlob = new Blob([dataStr], {type: "application/json"});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.download = `yura-piggy-bank-data-${new Date().toISOString().split('T')[0]}.json`;
+                link.href = url;
+                link.click();
+                URL.revokeObjectURL(url);
+                alert('데이터를 파일로 내보냈습니다! (Data exported to a file!)');
+                closePasswordModalButton.click();
+            });
+
+            importDataBtn.addEventListener('click', () => {
+                importFile.click();
+            });
+
+            importFile.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importedState = JSON.parse(e.target.result);
+                        if (confirm('정말로 데이터를 가져오시겠습니까? 현재 데이터는 사라집니다.\n(Are you sure you want to import data? Current data will be overwritten.)')) {
+                            state = importedState;
+                            saveData();
+                            render();
+                            alert('데이터를 성공적으로 가져왔습니다! (Data imported successfully!)');
+                            closePasswordModalButton.click();
+                        }
+                    } catch (error) {
+                        alert('잘못된 파일 형식입니다. (Invalid file format.)');
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = null; // Reset file input
+            });
+
+            closeAmountModalButton.addEventListener('click', () => {
+                amountModal.classList.add('hidden');
+                amountInput.value = '';
+            });
+
+            amountForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const amount = parseFloat(amountInput.value);
+                if (!isNaN(amount) && amount >= 0) {
+                    state.balance += amount;
+                    state.transactions.push({
+                        type: 'income',
+                        source: '초기 잔액 (Initial Balance)',
+                        amount: amount,
+                        date: new Date(new Date().getTime() - 1000).toISOString() // Ensure it's the first transaction
+                    });
+                    saveData();
+                    render();
+                    alert(`초기 잔액 $${amount.toFixed(2)}이 설정되었습니다. (Initial balance of $${amount.toFixed(2)} has been set.)`);
+                    amountModal.classList.add('hidden');
+                    amountInput.value = '';
+                } else {
+                    alert('유효한 숫자를 입력해주세요. (Please enter a valid number.)');
+                }
+            });
+            
+            incomeTab.addEventListener('click', () => switchTab('income'));
+            expenseTab.addEventListener('click', () => switchTab('expense'));
+            donationTab.addEventListener('click', () => switchTab('donation'));
+            listViewTab.addEventListener('click', () => { listViewTab.classList.add('active'); graphViewTab.classList.remove('active'); listViewContainer.classList.remove('hidden'); graphViewContainer.classList.add('hidden'); });
+            graphViewTab.addEventListener('click', () => { graphViewTab.classList.add('active'); listViewTab.classList.remove('active'); graphViewContainer.classList.remove('hidden'); listViewContainer.classList.add('hidden'); renderChart(); });
+            
+            depositAmountInput.addEventListener('input', updateInterestPreview);
+            depositPeriodInput.addEventListener('input', updateInterestPreview);
+
+            function initialize() {
+                loadData();
+                document.getElementById('allowanceAmount').value = state.allowance.amount || '';
+                checkAllowance();
+                // Update real-time interest every 10 seconds
+                setInterval(() => {
+                    render();
+                }, 10000);
+                render();
+            }
+
+            initialize();
+        });
+    </script>
+</body>
+</html>
+
