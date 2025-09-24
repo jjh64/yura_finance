@@ -222,8 +222,7 @@
     </div>
 
     <script>
-// Clean JS only (no HTML). Handles tabs, views, forms, deposits (simple interest), and optional cloud sync.
-
+// Clean JS only (no HTML). Handles tabs, views, forms, deposits (simple interest).
 (() => {
   // Utilities
   const STORAGE_KEY = 'yura_finance_state_v1';
@@ -251,24 +250,18 @@
       return {
         ...defaultState(),
         ...s,
-        incomes: s.incomes || [],
-        expenses: s.expenses || [],
-        deposits: s.deposits || [],
-        goals: s.goals || [],
-        goalLogs: s.goalLogs || [],
-        bankBalance: typeof s.bankBalance === 'number' ? s.bankBalance : 0,
-        evaluationScore: typeof s.evaluationScore === 'number' ? s.evaluationScore : 0
       };
     } catch {
       return defaultState();
     }
   }
+
   function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     cloudSave();
   }
 
-  // DOM
+  // DOM elements
   const goalTab = document.getElementById('goalTab');
   const incomeTab = document.getElementById('incomeTab');
   const expenseTab = document.getElementById('expenseTab');
@@ -296,50 +289,73 @@
   const goalList = document.getElementById('goalList');
   const goalLogsList = document.getElementById('goalLogsList');
 
-  // Safety: ensure tab/view buttons never submit forms
+  // Ensure buttons are type="button"
   goalTab?.setAttribute('type', 'button');
   incomeTab?.setAttribute('type', 'button');
   expenseTab?.setAttribute('type', 'button');
   listViewTab?.setAttribute('type', 'button');
   graphViewTab?.setAttribute('type', 'button');
 
-  // Tabs
+  // Tab switching
   function setActiveTab(tabBtn) {
-    [goalTab, incomeTab, expenseTab].forEach(b => b?.classList.remove('active'));
-    tabBtn?.classList.add('active');
-    goalSection?.classList.add('hidden');
-    incomeSection?.classList.add('hidden');
-    expenseSection?.classList.add('hidden');
-    if (tabBtn === goalTab) goalSection?.classList.remove('hidden');
-    if (tabBtn === incomeTab) incomeSection?.classList.remove('hidden');
-    if (tabBtn === expenseTab) expenseSection?.classList.remove('hidden');
+    // Remove active class from all tabs
+    [goalTab, incomeTab, expenseTab].forEach(btn => {
+      if (btn) btn.classList.remove('active');
+    });
+    
+    // Add active class to clicked tab
+    if (tabBtn) tabBtn.classList.add('active');
+    
+    // Hide all sections
+    if (goalSection) goalSection.classList.add('hidden');
+    if (incomeSection) incomeSection.classList.add('hidden');
+    if (expenseSection) expenseSection.classList.add('hidden');
+    
+    // Show active section
+    if (tabBtn === goalTab && goalSection) goalSection.classList.remove('hidden');
+    if (tabBtn === incomeTab && incomeSection) incomeSection.classList.remove('hidden');
+    if (tabBtn === expenseTab && expenseSection) expenseSection.classList.remove('hidden');
   }
-  goalTab?.addEventListener('click', () => setActiveTab(goalTab));
-  incomeTab?.addEventListener('click', () => setActiveTab(incomeTab));
-  expenseTab?.addEventListener('click', () => setActiveTab(expenseTab));
 
-  // Views
+  // View switching
   function setActiveView(viewBtn) {
-    [listViewTab, graphViewTab].forEach(b => b?.classList.remove('active'));
-    viewBtn?.classList.add('active');
+    // Remove active class from all views
+    [listViewTab, graphViewTab].forEach(btn => {
+      if (btn) btn.classList.remove('active');
+    });
+    
+    // Add active class to clicked view
+    if (viewBtn) viewBtn.classList.add('active');
+    
+    // Toggle visibility based on view
     const showGraph = viewBtn === graphViewTab;
-    listViewContainer?.classList.toggle('hidden', showGraph);
-    graphViewContainer?.classList.toggle('hidden', !showGraph);
+    if (listViewContainer) listViewContainer.classList.toggle('hidden', showGraph);
+    if (graphViewContainer) graphViewContainer.classList.toggle('hidden', !showGraph);
+    
+    // Render chart if graph view is active
     if (showGraph) renderChart();
   }
-  listViewTab?.addEventListener('click', () => setActiveView(listViewTab));
-  graphViewTab?.addEventListener('click', () => setActiveView(graphViewTab));
 
-  // Forms
+  // Add event listeners for tabs and views
+  if (goalTab) goalTab.addEventListener('click', () => setActiveTab(goalTab));
+  if (incomeTab) incomeTab.addEventListener('click', () => setActiveTab(incomeTab));
+  if (expenseTab) expenseTab.addEventListener('click', () => setActiveTab(expenseTab));
+  if (listViewTab) listViewTab.addEventListener('click', () => setActiveView(listViewTab));
+  if (graphViewTab) graphViewTab.addEventListener('click', () => setActiveView(graphViewTab));
+
+  // Income form submission
   document.getElementById('incomeForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const source = document.getElementById('incomeSource').value.trim();
     const amount = parseFloat(document.getElementById('incomeAmount').value || '0');
     if (!source || !amount || amount <= 0) return;
     state.incomes.push({ id: uid(), source, amount, date: toISODate() });
-    saveState(); renderAll(); e.target.reset();
+    saveState(); 
+    renderAll(); 
+    e.target.reset();
   });
 
+  // Expense form submission
   document.getElementById('expenseForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const source = document.getElementById('expenseSource').value.trim();
@@ -347,19 +363,24 @@
     const evalVal = Number((document.querySelector('input[name="evaluation"]:checked') || {}).value || 0);
     if (!source || !amount || amount <= 0) return;
     state.expenses.push({ id: uid(), source, amount, date: toISODate(), evaluation: evalVal, isDonation: false });
-    saveState(); renderAll(); e.target.reset();
+    saveState(); 
+    renderAll(); 
+    e.target.reset();
   });
 
+  // Donation button click
   document.getElementById('addDonationButton')?.addEventListener('click', () => {
     const source = document.getElementById('donationSource').value.trim();
     const amount = parseFloat(document.getElementById('donationAmount').value || '0');
     if (!source || !amount || amount <= 0) return;
     state.expenses.push({ id: uid(), source, amount, date: toISODate(), evaluation: 0, isDonation: true });
-    saveState(); renderAll();
+    saveState(); 
+    renderAll();
     document.getElementById('donationSource').value = '';
     document.getElementById('donationAmount').value = '';
   });
 
+  // Goal form submission
   document.getElementById('goalForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const item = document.getElementById('goalItem').value.trim();
@@ -369,40 +390,57 @@
     const g = { id: uid(), item, amount, date, achieved: false };
     state.goals.push(g);
     logGoal('add', g);
-    saveState(); renderAll(); e.target.reset();
+    saveState(); 
+    renderAll(); 
+    e.target.reset();
   });
 
-  // Deposits (simple interest 1% per day)
+  // Deposits with simple interest (1% per day)
   const depositAmountInput = document.getElementById('depositAmount');
   const depositPeriodInput = document.getElementById('depositPeriod');
   const interestPreview = document.getElementById('interestPreview');
+  
+  // Convert input to integer days
   const toIntDays = (v) => {
     const n = typeof v === 'number' ? v : Number(String(v).replace(/[^0-9.-]/g, ''));
     return Number.isFinite(n) ? Math.max(1, Math.round(n)) : 1;
   };
+  
+  // Update interest preview as user types
   function updateInterestPreview() {
     const amt = Number(depositAmountInput?.value || 0);
     const days = toIntDays(depositPeriodInput?.value || 0);
-    if (!amt || !days) { if (interestPreview) interestPreview.textContent=''; return; }
+    if (!amt || !days) { 
+      if (interestPreview) interestPreview.textContent=''; 
+      return; 
+    }
+    // Simple interest: principal * rate * time
     const interest = amt * 0.01 * days;
     const finalAmt = amt + interest;
-    if (interestPreview) interestPreview.textContent = `예상 이자(단리): ${money(interest)} → 만기: ${money(finalAmt)} (기간: ${days}일)`;
+    if (interestPreview) {
+      interestPreview.textContent = `예상 이자(단리): ${money(interest)} → 만기: ${money(finalAmt)} (기간: ${days}일)`;
+    }
   }
+  
+  // Add event listeners for deposit inputs
   depositAmountInput?.addEventListener('input', updateInterestPreview);
   depositPeriodInput?.addEventListener('input', updateInterestPreview);
+  
+  // Deposit button click
   document.getElementById('depositButton')?.addEventListener('click', () => {
     const amt = Number(depositAmountInput?.value || 0);
     const days = toIntDays(depositPeriodInput?.value || 0);
     if (amt <= 0 || days <= 0) return;
     state.deposits.push({ id: uid(), amount: amt, period: days, date: toISODate() });
     state.bankBalance = state.deposits.reduce((a, c) => a + Number(c.amount || 0), 0);
-    saveState(); renderAll();
+    saveState(); 
+    renderAll();
     if (depositAmountInput) depositAmountInput.value = '';
     if (depositPeriodInput) depositPeriodInput.value = '';
     if (interestPreview) interestPreview.textContent = '';
   });
 
-  // Goal logs render
+  // Goal logs
   function logGoal(action, payload) {
     state.goalLogs.unshift({
       id: uid(),
@@ -413,9 +451,14 @@
       at: new Date().toISOString()
     });
   }
+  
+  // Render goal logs
   function renderGoalLogs() {
     if (!goalLogsList) return;
-    if (!state.goalLogs.length) { goalLogsList.innerHTML = '<li class="text-center text-gray-500">기록이 없습니다.</li>'; return; }
+    if (!state.goalLogs.length) { 
+      goalLogsList.innerHTML = '<li class="text-center text-gray-500">기록이 없습니다.</li>'; 
+      return; 
+    }
     goalLogsList.innerHTML = state.goalLogs.map(log => {
       const ts = new Date(log.at).toLocaleString();
       const td = log.targetDate ? ` (목표일: ${log.targetDate})` : '';
@@ -424,7 +467,7 @@
     }).join('');
   }
 
-  // Rendering
+  // Calculate totals
   function recalc() {
     const totalIncome = state.incomes.reduce((a, c) => a + Number(c.amount || 0), 0);
     const totalExpense = state.expenses.reduce((a, c) => a + Number(c.amount || 0), 0);
@@ -441,74 +484,140 @@
     if (balanceEl) balanceEl.textContent = money(net);
     if (balanceSheetAmountEl) balanceSheetAmountEl.textContent = money(net);
   }
+  
+  // Render incomes list
   function renderIncomes() {
     if (!incomeList) return;
-    incomeList.innerHTML = state.incomes.map(x => `<li class="p-2 bg-blue-50 rounded-lg">${x.source} • ${money(x.amount)} • ${x.date||''}</li>`).join('');
+    incomeList.innerHTML = state.incomes.map(x => 
+      `<li class="p-2 bg-blue-50 rounded-lg">${x.source} • ${money(x.amount)} • ${x.date||''}</li>`
+    ).join('');
   }
+  
+  // Render expenses list
   function renderExpenses() {
     if (!expenseList) return;
-    expenseList.innerHTML = state.expenses.map(x => `<li class="p-2 bg-red-50 rounded-lg">${x.isDonation?'💖 ':''}${x.source} • ${money(x.amount)} • ${x.date||''}</li>`).join('');
+    expenseList.innerHTML = state.expenses.map(x => 
+      `<li class="p-2 bg-red-50 rounded-lg">${x.isDonation?'💖 ':''}${x.source} • ${money(x.amount)} • ${x.date||''}</li>`
+    ).join('');
   }
+  
+  // Render deposits list
   function renderDeposits() {
     if (!depositList) return;
-    depositList.innerHTML = state.deposits.map(x => `<div class="p-2 bg-indigo-50 rounded-lg">💼 ${money(x.amount)} • ${x.period||0}일 • ${x.date||''}</div>`).join('');
+    depositList.innerHTML = state.deposits.map(x => 
+      `<div class="p-2 bg-indigo-50 rounded-lg">💼 ${money(x.amount)} • ${x.period||0}일 • ${x.date||''}</div>`
+    ).join('');
   }
+  
+  // Render goals list
   function renderGoals() {
     if (!goalList) return;
-    goalList.innerHTML = state.goals.map(g => `<div class="p-2 rounded-lg ${g.achieved?'bg-gray-100':'bg-green-50'}">🎯 ${g.item} • ${money(g.amount)}${g.date?' • '+g.date:''}</div>`).join('');
+    goalList.innerHTML = state.goals.map(g => 
+      `<div class="p-2 rounded-lg ${g.achieved?'bg-gray-100':'bg-green-50'}">🎯 ${g.item} • ${money(g.amount)}${g.date?' • '+g.date:''}</div>`
+    ).join('');
   }
+  
+  // Render all content
   function renderAll() {
-    recalc(); renderIncomes(); renderExpenses(); renderDeposits(); renderGoals(); renderGoalLogs();
-    if (graphViewContainer && !graphViewContainer.classList.contains('hidden')) renderChart();
+    recalc(); 
+    renderIncomes(); 
+    renderExpenses(); 
+    renderDeposits(); 
+    renderGoals(); 
+    renderGoalLogs();
+    
+    if (graphViewContainer && !graphViewContainer.classList.contains('hidden')) {
+      renderChart();
+    }
   }
 
-  // Chart
+  // Chart functionality
   let chart;
+  
   function datasetFromTransactions() {
     const txs = [];
     state.incomes.forEach(x => txs.push({ date: x.date, delta: Number(x.amount)||0 }));
     state.expenses.forEach(x => txs.push({ date: x.date, delta: -1*(Number(x.amount)||0) }));
+    
     if (!txs.length) return [];
+    
     txs.sort((a,b) => new Date(a.date) - new Date(b.date));
     let cum = 0;
-    return txs.map(t => { cum += t.delta; return { x: new Date(t.date), y: cum }; });
+    return txs.map(t => { 
+      cum += t.delta; 
+      return { x: new Date(t.date), y: cum }; 
+    });
   }
+  
   function renderChart() {
     const canvas = document.getElementById('transactionChart');
     if (!canvas || typeof Chart === 'undefined') return;
+    
     const data = datasetFromTransactions();
     if (chart) { chart.destroy(); chart = null; }
     if (!data.length) return;
+    
     chart = new Chart(canvas, {
       type: 'line',
-      data: { datasets: [{ label: '누적 잔액', data, borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.15)', fill: true, tension: 0.2, pointRadius: 2 }] },
-      options: { responsive: true, maintainAspectRatio: false, parsing: false, scales: { x: { type: 'time', time: { unit: 'day' } } } }
+      data: { 
+        datasets: [{ 
+          label: '누적 잔액', 
+          data, 
+          borderColor: '#3B82F6', 
+          backgroundColor: 'rgba(59,130,246,0.15)', 
+          fill: true, 
+          tension: 0.2, 
+          pointRadius: 2 
+        }] 
+      },
+      options: { 
+        responsive: true, 
+        maintainAspectRatio: false, 
+        parsing: false, 
+        scales: { x: { type: 'time', time: { unit: 'day' } } } 
+      }
     });
   }
 
-  // Init
+  // Initialize
   renderAll();
   setActiveView(listViewTab);
-  // Always start on Goals tab
   setTimeout(() => setActiveTab(goalTab), 0);
 
-  // ===== Optional: Cloud sync (Firestore) =====
-  const ENABLE_CLOUD_SYNC = false; // true 로 바꾸고 firebaseConfig 채우면 기기간 동기화
+  // Optional: Cross-device sync
+  const ENABLE_CLOUD_SYNC = true; // 모든 기기에서 동일 데이터 사용
   const firebaseConfig = {
-    // apiKey: "", authDomain: "", projectId: ""
+    apiKey: "AIzaSyDg5y1cW4GK0bYgVQHVCjYX-UkiF9nGsoI",
+    authDomain: "yura-finance.firebaseapp.com",
+    projectId: "yura-finance",
+    storageBucket: "yura-finance.appspot.com",
+    messagingSenderId: "917518854408",
+    appId: "1:917518854408:web:6149c928173149f00c1256"
   };
+  
   let _cloudReady = false, _docRef = null;
+  
   function loadScript(src) {
-    return new Promise((res, rej) => { const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    return new Promise((res, rej) => { 
+      const s = document.createElement('script'); 
+      s.src = src; 
+      s.onload = res; 
+      s.onerror = rej; 
+      document.head.appendChild(s); 
+    });
   }
+  
   async function initCloudSync() {
     if (!ENABLE_CLOUD_SYNC) return;
+    
     try {
       await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
       await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js');
+      
       const app = firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
       _docRef = db.collection('yura_finance').doc('state');
+      
       const snap = await _docRef.get();
       if (snap.exists && snap.data()) {
         state = { ...defaultState(), ...snap.data() };
@@ -517,6 +626,7 @@
       } else {
         await _docRef.set(state);
       }
+      
       _docRef.onSnapshot(doc => {
         if (!doc.exists) return;
         const remote = doc.data();
@@ -525,13 +635,18 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         renderAll();
       });
+      
       _cloudReady = true;
-    } catch (e) { console.warn('Cloud sync init failed:', e); }
+    } catch (e) { 
+      console.warn('Cloud sync init failed:', e); 
+    }
   }
+  
   function cloudSave() {
     if (!_cloudReady || !_docRef) return;
     _docRef.set(state).catch(err => console.warn('Cloud save failed:', err));
   }
+  
   initCloudSync();
 })();
     </script>
