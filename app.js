@@ -23,35 +23,36 @@
   }
 
   // DOM 요소 참조
-  const goalTab = document.getElementById('goalTab'), incomeTab = document.getElementById('incomeTab'), expenseTab = document.getElementById('expenseTab');
-  const goalSection = document.getElementById('goalSection'), incomeSection = document.getElementById('incomeSection'), expenseSection = document.getElementById('expenseSection');
-  const listViewTab = document.getElementById('listViewTab'), graphViewTab = document.getElementById('graphViewTab');
-  const listViewContainer = document.getElementById('listViewContainer'), graphViewContainer = document.getElementById('graphViewContainer');
+  const goalTab = document.getElementById('goalTab'),
+        savingsTab = document.getElementById('savingsTab'),
+        incomeTab = document.getElementById('incomeTab'),
+        expenseTab = document.getElementById('expenseTab');
+        
+  const goalSection = document.getElementById('goalSection'),
+        savingsSection = document.getElementById('savingsSection'),
+        incomeSection = document.getElementById('incomeSection'),
+        expenseSection = document.getElementById('expenseSection');
 
-  // 탭/뷰 전환
+  const allTabs = [goalTab, savingsTab, incomeTab, expenseTab];
+  const allSections = [goalSection, savingsSection, incomeSection, expenseSection];
+
+  // 탭 전환
   function setActiveTab(tab) {
-    [goalTab, incomeTab, expenseTab].forEach(t => t.classList.remove('active'));
+    allTabs.forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-    [goalSection, incomeSection, expenseSection].forEach(s => s.classList.add('hidden'));
+    allSections.forEach(s => s.classList.add('hidden'));
+    
     if (tab === goalTab) goalSection.classList.remove('hidden');
+    if (tab === savingsTab) savingsSection.classList.remove('hidden');
     if (tab === incomeTab) incomeSection.classList.remove('hidden');
     if (tab === expenseTab) expenseSection.classList.remove('hidden');
-  }
-  function setActiveView(viewTab) {
-    [listViewTab, graphViewTab].forEach(t => t.classList.remove('active'));
-    viewTab.classList.add('active');
-    const isGraphView = viewTab === graphViewTab;
-    listViewContainer.classList.toggle('hidden', isGraphView);
-    graphViewContainer.classList.toggle('hidden', !isGraphView);
-    if (isGraphView) renderChart();
   }
 
   // 이벤트 리스너
   goalTab.addEventListener('click', () => setActiveTab(goalTab));
+  savingsTab.addEventListener('click', () => setActiveTab(savingsTab));
   incomeTab.addEventListener('click', () => setActiveTab(incomeTab));
   expenseTab.addEventListener('click', () => setActiveTab(expenseTab));
-  listViewTab.addEventListener('click', () => setActiveView(listViewTab));
-  graphViewTab.addEventListener('click', () => setActiveView(graphViewTab));
 
   // 항목 삭제/수정 함수
   function handleDelete(type, id) {
@@ -159,15 +160,12 @@
     // 요약 렌더링
     const totalIncome = state.incomes.reduce((s, i) => s + i.amount, 0);
     const totalExpense = state.expenses.reduce((s, e) => s + e.amount, 0);
-    const totalDonation = state.expenses.filter(e => e.isDonation).reduce((s, e) => s + e.amount, 0);
     const bankBalance = state.deposits.reduce((s, d) => s + d.amount, 0);
-    const evaluationScore = state.expenses.reduce((s, e) => s + (e.evaluation || 0), 0);
+    
     document.getElementById('balance').textContent = money(totalIncome - totalExpense);
     document.getElementById('totalIncome').textContent = money(totalIncome);
     document.getElementById('totalExpense').textContent = money(totalExpense);
-    document.getElementById('totalDonation').textContent = money(totalDonation);
     document.getElementById('bankBalance').textContent = money(bankBalance);
-    document.getElementById('evaluationScore').textContent = evaluationScore;
 
     // 목록 렌더링
     renderList('incomeList', state.incomes, 'incomes', item => {
@@ -194,33 +192,9 @@
       div.innerHTML = `<span>💼 ${money(item.amount)} • ${item.period}일</span>`;
       return div;
     });
-
-    if (!graphViewContainer.classList.contains('hidden')) renderChart();
-  }
-
-  // 차트 렌더링
-  let chart;
-  function renderChart() {
-    const canvas = document.getElementById('transactionChart');
-    if (!canvas || typeof Chart === 'undefined') return;
-    const data = [];
-    let cumulative = 0;
-    [...state.incomes, ...state.expenses.map(e => ({...e, amount: -e.amount}))]
-      .sort((a, b) => new Date(a.date) - new Date(b.date))
-      .forEach(tx => {
-        cumulative += tx.amount;
-        data.push({ x: new Date(tx.date), y: cumulative });
-      });
-    if (chart) chart.destroy();
-    chart = new Chart(canvas, {
-      type: 'line',
-      data: { datasets: [{ label: '누적 잔액', data, borderColor: '#3B82F6', fill: true }] },
-      options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'time', time: { unit: 'day' } } } }
-    });
   }
 
   // 초기화
   renderAll();
-  setActiveView(listViewTab);
-  setTimeout(() => setActiveTab(goalTab), 0);
+  setActiveTab(goalTab);
 })();
