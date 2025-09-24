@@ -243,7 +243,7 @@
 </body>
 </html>
 <script>
-// 순수 JavaScript 코드만 포함 - HTML 코드 없음
+// 순수 JavaScript 코드만 포함되어야 합니다.
 (() => {
   // 상수 및 유틸리티
   const STORAGE_KEY = 'yura_finance_v1';
@@ -339,13 +339,7 @@
       const amount = parseFloat(document.getElementById('incomeAmount').value || '0');
       if (!source || amount <= 0) return;
       
-      state.incomes.push({
-        id: uid(),
-        source,
-        amount,
-        date: toISODate()
-      });
-      
+      state.incomes.push({ id: uid(), source, amount, date: toISODate() });
       saveState();
       renderAll();
       e.target.reset();
@@ -364,15 +358,7 @@
       
       if (!source || amount <= 0) return;
       
-      state.expenses.push({
-        id: uid(),
-        source,
-        amount,
-        date: toISODate(),
-        evaluation: evalValue,
-        isDonation: false
-      });
-      
+      state.expenses.push({ id: uid(), source, amount, date: toISODate(), evaluation: evalValue, isDonation: false });
       saveState();
       renderAll();
       e.target.reset();
@@ -385,18 +371,9 @@
     donationBtn.addEventListener('click', () => {
       const source = document.getElementById('donationSource').value.trim();
       const amount = parseFloat(document.getElementById('donationAmount').value || '0');
-      
       if (!source || amount <= 0) return;
       
-      state.expenses.push({
-        id: uid(),
-        source,
-        amount,
-        date: toISODate(),
-        evaluation: 0,
-        isDonation: true
-      });
-      
+      state.expenses.push({ id: uid(), source, amount, date: toISODate(), evaluation: 0, isDonation: true });
       saveState();
       renderAll();
       
@@ -415,20 +392,11 @@
       const item = document.getElementById('goalItem').value.trim();
       const amount = parseFloat(document.getElementById('goalAmount').value || '0');
       const date = document.getElementById('goalDate').value;
-      
       if (!item || amount <= 0 || !date) return;
       
-      const goal = {
-        id: uid(),
-        item,
-        amount,
-        date,
-        achieved: false
-      };
-      
+      const goal = { id: uid(), item, amount, date, achieved: false };
       state.goals.push(goal);
       logGoal('add', goal);
-      
       saveState();
       renderAll();
       e.target.reset();
@@ -437,14 +405,7 @@
 
   // 목표 로그 기록
   function logGoal(action, goal) {
-    state.goalLogs.unshift({
-      id: uid(),
-      action,
-      item: goal.item,
-      amount: Number(goal.amount),
-      targetDate: goal.date,
-      at: new Date().toISOString()
-    });
+    state.goalLogs.unshift({ id: uid(), action, item: goal.item, amount: Number(goal.amount), targetDate: goal.date, at: new Date().toISOString() });
   }
 
   // 예금 계산 (단리 1%/일)
@@ -455,16 +416,12 @@
   function updateInterestPreview() {
     const amount = Number(depositAmountInput?.value || 0);
     const period = Number(depositPeriodInput?.value || 0);
-    
     if (amount <= 0 || period <= 0) {
       if (interestPreview) interestPreview.textContent = '';
       return;
     }
-    
-    // 단리: 원금 × 이율 × 기간
     const interest = amount * 0.01 * period;
     const total = amount + interest;
-    
     if (interestPreview) {
       interestPreview.textContent = `예상 이자(단리): ${money(interest)} → 만기: ${money(total)} (기간: ${period}일)`;
     }
@@ -479,18 +436,10 @@
     depositButton.addEventListener('click', () => {
       const amount = Number(depositAmountInput?.value || 0);
       const period = Number(depositPeriodInput?.value || 0);
-      
       if (amount <= 0 || period <= 0) return;
       
-      state.deposits.push({
-        id: uid(),
-        amount,
-        period,
-        date: toISODate()
-      });
-      
+      state.deposits.push({ id: uid(), amount, period, date: toISODate() });
       state.bankBalance = state.deposits.reduce((sum, dep) => sum + Number(dep.amount || 0), 0);
-      
       saveState();
       renderAll();
       
@@ -525,9 +474,7 @@
     
     const totalIncome = state.incomes.reduce((sum, inc) => sum + Number(inc.amount || 0), 0);
     const totalExpense = state.expenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
-    const totalDonation = state.expenses
-      .filter(exp => exp.isDonation)
-      .reduce((sum, don) => sum + Number(don.amount || 0), 0);
+    const totalDonation = state.expenses.filter(exp => exp.isDonation).reduce((sum, don) => sum + Number(don.amount || 0), 0);
     const evalScore = state.expenses.reduce((sum, exp) => sum + Number(exp.evaluation || 0), 0);
     const netBalance = totalIncome - totalExpense;
     
@@ -543,67 +490,39 @@
   function renderIncomes() {
     const incomeList = document.getElementById('incomeList');
     if (!incomeList) return;
-    
-    incomeList.innerHTML = state.incomes.map(income => `
-      <li class="p-2 bg-blue-50 rounded-lg">
-        ${income.source} • ${money(income.amount)} • ${income.date || ''}
-      </li>
-    `).join('');
+    incomeList.innerHTML = state.incomes.map(income => `<li class="p-2 bg-blue-50 rounded-lg">${income.source} • ${money(income.amount)} • ${income.date || ''}</li>`).join('');
   }
   
   function renderExpenses() {
     const expenseList = document.getElementById('expenseList');
     if (!expenseList) return;
-    
-    expenseList.innerHTML = state.expenses.map(expense => `
-      <li class="p-2 bg-red-50 rounded-lg">
-        ${expense.isDonation ? '💖 ' : ''}${expense.source} • ${money(expense.amount)} • ${expense.date || ''}
-      </li>
-    `).join('');
+    expenseList.innerHTML = state.expenses.map(expense => `<li class="p-2 bg-red-50 rounded-lg">${expense.isDonation ? '💖 ' : ''}${expense.source} • ${money(expense.amount)} • ${expense.date || ''}</li>`).join('');
   }
   
   function renderDeposits() {
     const depositList = document.getElementById('depositList');
     if (!depositList) return;
-    
-    depositList.innerHTML = state.deposits.map(deposit => `
-      <div class="p-2 bg-indigo-50 rounded-lg">
-        💼 ${money(deposit.amount)} • ${deposit.period || 0}일 • ${deposit.date || ''}
-      </div>
-    `).join('');
+    depositList.innerHTML = state.deposits.map(deposit => `<div class="p-2 bg-indigo-50 rounded-lg">💼 ${money(deposit.amount)} • ${deposit.period || 0}일 • ${deposit.date || ''}</div>`).join('');
   }
   
   function renderGoals() {
     const goalList = document.getElementById('goalList');
     if (!goalList) return;
-    
-    goalList.innerHTML = state.goals.map(goal => `
-      <div class="p-2 rounded-lg ${goal.achieved ? 'bg-gray-100' : 'bg-green-50'}">
-        🎯 ${goal.item} • ${money(goal.amount)} ${goal.date ? '• ' + goal.date : ''}
-      </div>
-    `).join('');
+    goalList.innerHTML = state.goals.map(goal => `<div class="p-2 rounded-lg ${goal.achieved ? 'bg-gray-100' : 'bg-green-50'}">🎯 ${goal.item} • ${money(goal.amount)} ${goal.date ? '• ' + goal.date : ''}</div>`).join('');
   }
   
   function renderGoalLogs() {
     const goalLogsList = document.getElementById('goalLogsList');
     if (!goalLogsList) return;
-    
     if (!state.goalLogs.length) {
       goalLogsList.innerHTML = '<li class="text-center text-gray-500">기록이 없습니다.</li>';
       return;
     }
-    
     goalLogsList.innerHTML = state.goalLogs.map(log => {
       const timestamp = new Date(log.at).toLocaleString();
       const targetDate = log.targetDate ? ` (목표일: ${log.targetDate})` : '';
-      const action = log.action === 'add' ? '추가' : 
-                    log.action === 'achieve' ? '획득' : '삭제';
-      
-      return `
-        <li class="p-2 rounded-lg bg-green-50 text-sm">
-          [${action}] ${log.item} - ${money(log.amount)}${targetDate} • ${timestamp}
-        </li>
-      `;
+      const action = log.action === 'add' ? '추가' : '기타';
+      return `<li class="p-2 rounded-lg bg-green-50 text-sm">[${action}] ${log.item} - ${money(log.amount)}${targetDate} • ${timestamp}</li>`;
     }).join('');
   }
   
@@ -612,39 +531,23 @@
     const canvas = document.getElementById('transactionChart');
     if (!canvas || typeof Chart === 'undefined') return;
     
-    // 차트 데이터 준비
-    const transactions = [];
-    state.incomes.forEach(inc => transactions.push({
-      date: inc.date,
-      amount: Number(inc.amount || 0)
-    }));
-    
-    state.expenses.forEach(exp => transactions.push({
-      date: exp.date,
-      amount: -Number(exp.amount || 0)
-    }));
+    const transactions = [
+      ...state.incomes.map(inc => ({ date: inc.date, amount: Number(inc.amount || 0) })),
+      ...state.expenses.map(exp => ({ date: exp.date, amount: -Number(exp.amount || 0) }))
+    ];
     
     if (!transactions.length) return;
     
-    // 날짜순 정렬
     transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
     
-    // 누적 계산
     let cumulative = 0;
     const chartData = transactions.map(tx => {
       cumulative += tx.amount;
-      return {
-        x: new Date(tx.date),
-        y: cumulative
-      };
+      return { x: new Date(tx.date), y: cumulative };
     });
     
-    // 기존 차트 파괴
-    if (window.financeChart) {
-      window.financeChart.destroy();
-    }
+    if (window.financeChart) window.financeChart.destroy();
     
-    // 새 차트 생성
     window.financeChart = new Chart(canvas, {
       type: 'line',
       data: {
@@ -661,14 +564,7 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        scales: {
-          x: {
-            type: 'time',
-            time: {
-              unit: 'day'
-            }
-          }
-        }
+        scales: { x: { type: 'time', time: { unit: 'day' } } }
       }
     });
   }
