@@ -65,7 +65,10 @@
     if (!item) return;
     const newText = prompt(`새로운 내용을 입력하세요 (현재: ${item.source || item.item})`, item.source || item.item);
     const newAmount = parseFloat(prompt(`새로운 금액을 입력하세요 (현재: ${item.amount})`, item.amount));
-    if (newText) item.source = item.item = newText;
+    if (newText) {
+        if (item.source !== undefined) item.source = newText;
+        if (item.item !== undefined) item.item = newText;
+    }
     if (!isNaN(newAmount) && newAmount > 0) item.amount = newAmount;
     saveState();
   }
@@ -73,8 +76,9 @@
   // 폼 제출 핸들러
   document.getElementById('incomeForm').addEventListener('submit', e => {
     e.preventDefault();
-    const source = e.target.incomeSource.value.trim(), amount = parseFloat(e.target.incomeAmount.value);
-    if (!source || amount <= 0) return;
+    const source = document.getElementById('incomeSource').value.trim();
+    const amount = parseFloat(document.getElementById('incomeAmount').value);
+    if (!source || isNaN(amount) || amount <= 0) return;
     state.incomes.push({ id: uid(), source, amount, date: toISODate() });
     saveState();
     e.target.reset();
@@ -82,27 +86,33 @@
 
   document.getElementById('expenseForm').addEventListener('submit', e => {
     e.preventDefault();
-    const source = e.target.expenseSource.value.trim(), amount = parseFloat(e.target.expenseAmount.value);
-    const evaluation = Number(e.target.evaluation.value);
-    if (!source || amount <= 0) return;
+    const source = document.getElementById('expenseSource').value.trim();
+    const amount = parseFloat(document.getElementById('expenseAmount').value);
+    const evaluation = Number(document.querySelector('input[name="evaluation"]:checked').value);
+    if (!source || isNaN(amount) || amount <= 0) return;
     state.expenses.push({ id: uid(), source, amount, date: toISODate(), evaluation, isDonation: false });
     saveState();
     e.target.reset();
   });
 
   document.getElementById('addDonationButton').addEventListener('click', () => {
-    const source = document.getElementById('donationSource').value.trim(), amount = parseFloat(document.getElementById('donationAmount').value);
-    if (!source || amount <= 0) return;
+    const sourceInput = document.getElementById('donationSource');
+    const amountInput = document.getElementById('donationAmount');
+    const source = sourceInput.value.trim();
+    const amount = parseFloat(amountInput.value);
+    if (!source || isNaN(amount) || amount <= 0) return;
     state.expenses.push({ id: uid(), source, amount, date: toISODate(), evaluation: 0, isDonation: true });
     saveState();
-    document.getElementById('donationSource').value = '';
-    document.getElementById('donationAmount').value = '';
+    sourceInput.value = '';
+    amountInput.value = '';
   });
 
   document.getElementById('goalForm').addEventListener('submit', e => {
     e.preventDefault();
-    const item = e.target.goalItem.value.trim(), amount = parseFloat(e.target.goalAmount.value), date = e.target.goalDate.value;
-    if (!item || amount <= 0 || !date) return;
+    const item = document.getElementById('goalItem').value.trim();
+    const amount = parseFloat(document.getElementById('goalAmount').value);
+    const date = document.getElementById('goalDate').value;
+    if (!item || isNaN(amount) || amount <= 0 || !date) return;
     state.goals.push({ id: uid(), item, amount, date, achieved: false });
     saveState();
     e.target.reset();
@@ -160,8 +170,13 @@
     const totalIncome = state.incomes.reduce((s, i) => s + i.amount, 0);
     const totalExpense = state.expenses.reduce((s, e) => s + e.amount, 0);
     const bankBalance = state.deposits.reduce((s, d) => s + d.amount, 0);
+    const evaluationScore = state.expenses.reduce((s, e) => s + (e.evaluation || 0), 0);
+    const totalDonation = state.expenses.filter(e => e.isDonation).reduce((s, e) => s + e.amount, 0);
     
     document.getElementById('balance').textContent = money(totalIncome - totalExpense);
+    document.getElementById('balanceSummary').textContent = money(totalIncome - totalExpense);
+    document.getElementById('evaluationScore').textContent = evaluationScore;
+    document.getElementById('totalDonation').textContent = money(totalDonation);
     document.getElementById('totalIncome').textContent = money(totalIncome);
     document.getElementById('totalExpense').textContent = money(totalExpense);
     document.getElementById('bankBalance').textContent = money(bankBalance);
@@ -176,7 +191,9 @@
     renderList('expenseList', state.expenses, 'expenses', item => {
       const li = document.createElement('li');
       li.className = 'p-2 bg-red-50 rounded-lg flex justify-between items-center';
-      li.innerHTML = `<span>${item.isDonation ? '💖 ' : ''}${item.source} • ${money(item.amount)}</span>`;
+      const score = item.evaluation;
+      const scoreText = item.isDonation ? '' : `(${score > 0 ? '+' : ''}${score}점)`;
+      li.innerHTML = `<span>${item.isDonation ? '💖 ' : ''}${item.source} • ${money(item.amount)} <span class="text-xs text-gray-500">${scoreText}</span></span>`;
       return li;
     });
     renderList('goalList', state.goals, 'goals', item => {
@@ -187,8 +204,11 @@
     });
     renderList('depositList', state.deposits, 'deposits', item => {
       const div = document.createElement('div');
-      div.className = 'p-2 bg-indigo-50 rounded-lg flex justify-between items-center';
-      div.innerHTML = `<span>💼 ${money(item.amount)} • ${item.period}일</span>`;
+      div.className = 'p-2 bg-indigo-50 rounded-lg flex justify-between items-center text-sm';
+      const interest = item.amount * 0.01 * item.period;
+      const startDate = new Date(item.date);
+      const maturityDate = new Date(startDate.setDate(startDate.getDate() + item.period));
+      div.innerHTML = `<span>💼 ${money(item.amount)} (이자: ${money(interest)})<br>만기: ${toISODate(maturityDate)}</span>`;
       return div;
     });
   }

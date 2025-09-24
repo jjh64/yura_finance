@@ -20,6 +20,22 @@
             <p class="text-gray-500 mt-2">오늘의 똑똑한 선택이 내일의 멋진 유라를 만든다!</p>
         </header>
 
+        <!-- 요약 정보 -->
+        <section class="bg-white p-6 rounded-2xl shadow-lg mb-8 grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
+            <div>
+                <h2 class="text-sm font-bold text-gray-500">현재 잔액</h2>
+                <p id="balanceSummary" class="text-2xl font-bold text-blue-600">$0.00</p>
+            </div>
+            <div>
+                <h2 class="text-sm font-bold text-gray-500">소비 점수</h2>
+                <p id="evaluationScore" class="text-2xl font-bold text-green-500">0</p>
+            </div>
+            <div>
+                <h2 class="text-sm font-bold text-gray-500">총 기부액</h2>
+                <p id="totalDonation" class="text-2xl font-bold text-pink-500">$0.00</p>
+            </div>
+        </section>
+
         <main class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <!-- 왼쪽 패널: 입력 폼 -->
             <div class="bg-white p-6 rounded-2xl shadow-lg">
@@ -39,9 +55,7 @@
                         <div class="mb-4"><label for="goalDate" class="font-bold">목표 날짜</label><input type="date" id="goalDate" class="w-full p-2 border rounded-lg mt-1" required></div>
                         <button type="submit" class="w-full bg-green-500 text-white font-bold p-3 rounded-lg hover:bg-green-600">목표 추가하기</button>
                     </form>
-                    <div id="goalList" class="mt-4 space-y-2 max-h-60 overflow-y-auto">
-                        <!-- 목표 목록이 여기에 표시됩니다 -->
-                    </div>
+                    <div id="goalList" class="mt-4 space-y-2 max-h-60 overflow-y-auto"></div>
                 </div>
 
                 <!-- 저축 폼 -->
