@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      cloudSave(); // no-op unless cloud sync enabled
     }
     function hardResetState() {
       state = defaultState();
@@ -433,7 +434,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const editPeriodEl = document.getElementById('editPeriod');
     const closeEditItemModalButton = document.getElementById('closeEditItemModalButton');
 
+    // Make openEditModalFor safe if modal not present
     function openEditModalFor(type, id) {
+      if (!editItemModal) {
+        console.warn('Edit modal markup (#editItemModal) is missing in index.html');
+        return;
+      }
       editItemTypeEl.value = type;
       editItemIdEl.value = id;
       editEvaluationGroup.classList.add('hidden');
@@ -632,6 +638,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial draw
     renderAll();
-    setActiveTab(incomeTab);
+    setActiveTab(goalTab);
+    setActiveView(listViewTab);
+
+    // Optional: cross-device sync via Firebase (fill config and set ENABLE_CLOUD_SYNC=true)
+    const ENABLE_CLOUD_SYNC = false; // set to true after adding your Firebase config
+    const firebaseConfig = {
+      // TODO: fill with your Firebase config
+      // apiKey: "", authDomain: "", projectId: "", ...
+    };
+    let _cloudReady = false;
+    let _docRef = null;
+
+    function loadScript(src) {
+      return new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s);
+      });
+    }
+
+    async function initCloudSync() {
+      if (!ENABLE_CLOUD_SYNC) return;
+      try {
+        await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
+        await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js');
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        _docRef = db.collection('yura_finance').doc('state');
+
+        // Pull remote; if empty, push local
+        const snap = await _docRef.get();
+        if (snap.exists && snap.data()) {
+          state = { ...defaultState(), ...snap.data() };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          renderAll();
+        } else {
+          await _docRef.set(state);
+        }
+
+        // Live updates
+        _docRef.onSnapshot((doc) => {
+          if (!doc.exists) return;
+          const remote = doc.data();
+          // Skip if identical
+          if (JSON.stringify(remote) === JSON.stringify(state)) return;
+          state = { ...defaultState(), ...remote };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          renderAll();
+        });
+
+        _cloudReady = true;
+      } catch (e) {
+        console.warn('Cloud sync init failed:', e);
+      }
+    }
+
+    function cloudSave() {
+      if (!_cloudReady || !_docRef) return;
+      // Push current state to cloud
+      _docRef.set(state).catch(err => console.warn('Cloud save failed:', err));
+    }
+
+    // Kick off cloud sync after first render
+    renderAll();
+    initCloudSync();
+    setActiveTab(goalTab);
     setActiveView(listViewTab);
 });
