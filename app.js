@@ -243,7 +243,7 @@
 </body>
 </html>
 <script>
-// 순수 JavaScript만 포함된 파일
+// 순수 JavaScript 코드만 포함 - HTML 코드 없음
 (() => {
   // 상수 및 유틸리티
   const STORAGE_KEY = 'yura_finance_v1';
