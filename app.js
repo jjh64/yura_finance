@@ -1,4 +1,3 @@
-// HTML 코드는 모두 제거하고 아래의 순수 JavaScript 코드만 남겨주세요.
 (() => {
   // 상수 및 유틸리티
   const STORAGE_KEY = 'yura_finance_v1';
