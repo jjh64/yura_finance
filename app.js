@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return Number.isFinite(n) ? Math.max(1, Math.round(n)) : 1;
     };
 
-    // Deposit refs
+    // Deposits (단리 1%/일, 단일 정의로 유지)
     const depositAmountInput = document.getElementById('depositAmount');
     const depositPeriodInput = document.getElementById('depositPeriod');
     const interestPreview = document.getElementById('interestPreview');
@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (interestPreview) interestPreview.textContent = '';
         return;
       }
-      // Simple interest: 1% per day
+      // 단리: 원금 × 1% × 일수
       const interest = amt * 0.01 * period;
       const finalAmt = amt + interest;
       if (interestPreview) {
@@ -328,25 +328,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const period = toIntDays(depositPeriodInput?.value || 0);
       if (amt <= 0 || period <= 0) return;
 
-      // Save exactly the entered integer days
       state.deposits.push({ id: uid(), amount: amt, period, date: toISODate() });
-
-      // Recompute bank balance from deposits
       state.bankBalance = state.deposits.reduce((a, c) => a + Number(c.amount || 0), 0);
 
-      saveState();
-      renderAll();
+      saveState(); renderAll();
 
-      // Reset inputs and preview
       if (depositAmountInput) depositAmountInput.value = '';
       if (depositPeriodInput) depositPeriodInput.value = '';
       if (interestPreview) interestPreview.textContent = '';
     });
 
-    // If you render deposits elsewhere, ensure period is shown as saved:
-    // renderDeposits() should use: ${x.period}일 without any math.
-
-    // Goals
+    // Goals (단일 정의로 유지)
     document.getElementById('goalForm')?.addEventListener('submit', (e) => {
       e.preventDefault();
       const item = document.getElementById('goalItem').value.trim();
@@ -786,6 +778,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Always start on Goals and List view
     setActiveView(listViewTab);
-    // Defer to ensure any late layout code won’t override it
     setTimeout(() => setActiveTab(goalTab), 0);
 });
