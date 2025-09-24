@@ -294,36 +294,112 @@ document.addEventListener('DOMContentLoaded', () => {
       saveState(); renderAll(); e.target.reset();
     });
 
+    // Helper to coerce integer days safely
+    const toIntDays = (v) => {
+      const n = typeof v === 'number' ? v : Number(String(v).replace(/[^0-9.-]/g, ''));
+      return Number.isFinite(n) ? Math.max(1, Math.round(n)) : 1;
+    };
+
+    // Deposit refs
+    const depositAmountInput = document.getElementById('depositAmount');
+    const depositPeriodInput = document.getElementById('depositPeriod');
+    const interestPreview = document.getElementById('interestPreview');
+
+    function updateInterestPreview() {
+      const amt = Number(depositAmountInput?.value || 0);
+      const period = toIntDays(depositPeriodInput?.value || 0);
+      if (!amt || !period) {
+        if (interestPreview) interestPreview.textContent = '';
+        return;
+      }
+      // 1% daily compounding
+      const interest = amt * (Math.pow(1.01, period) - 1);
+      const finalAmt = amt + interest;
+      if (interestPreview) {
+        interestPreview.textContent = `예상 이자: $${interest.toFixed(2)} → 만기: $${finalAmt.toFixed(2)} (기간: ${period}일)`;
+      }
+    }
+
+    depositAmountInput?.addEventListener('input', updateInterestPreview);
+    depositPeriodInput?.addEventListener('input', updateInterestPreview);
+
+    document.getElementById('depositButton')?.addEventListener('click', () => {
+      const amt = Number(depositAmountInput?.value || 0);
+      const period = toIntDays(depositPeriodInput?.value || 0);
+      if (amt <= 0 || period <= 0) return;
+
+      // Save exactly the entered integer days
+      state.deposits.push({ id: uid(), amount: amt, period, date: toISODate() });
+
+      // Recompute bank balance from deposits
+      state.bankBalance = state.deposits.reduce((a, c) => a + Number(c.amount || 0), 0);
+
+      saveState();
+      renderAll();
+
+      // Reset inputs and preview
+      if (depositAmountInput) depositAmountInput.value = '';
+      if (depositPeriodInput) depositPeriodInput.value = '';
+      if (interestPreview) interestPreview.textContent = '';
+    });
+
+    // If you render deposits elsewhere, ensure period is shown as saved:
+    // renderDeposits() should use: ${x.period}일 without any math.
+
+    // Goals
+    document.getElementById('goalForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const item = document.getElementById('goalItem').value.trim();
+      const amount = parseFloat(document.getElementById('goalAmount').value || '0');
+      const date = document.getElementById('goalDate').value;
+      if (!item || isNaN(amount) || amount <= 0 || !date) return;
+      const g = { id: uid(), item, amount, date, achieved: false };
+      state.goals.push(g);
+      logGoal('add', g);
+      saveState(); renderAll(); e.target.reset();
+    });
+
     // Deposits
     const depositAmountInput = document.getElementById('depositAmount');
     const depositPeriodInput = document.getElementById('depositPeriod');
     const interestPreview = document.getElementById('interestPreview');
 
     function updateInterestPreview() {
-      const amt = parseFloat(depositAmountInput?.value || '0');
-      const period = parseInt(depositPeriodInput?.value || '0', 10);
-      if (!amt || !period || amt <= 0 || period <= 0) {
-        interestPreview.textContent = '';
+      const amt = Number(depositAmountInput?.value || 0);
+      const period = toIntDays(depositPeriodInput?.value || 0);
+      if (!amt || !period) {
+        if (interestPreview) interestPreview.textContent = '';
         return;
       }
+      // 1% daily compounding
       const interest = amt * (Math.pow(1.01, period) - 1);
       const finalAmt = amt + interest;
-      interestPreview.textContent = `예상 이자: ${money(interest)} → 만기: ${money(finalAmt)}`;
+      if (interestPreview) {
+        interestPreview.textContent = `예상 이자: $${interest.toFixed(2)} → 만기: $${finalAmt.toFixed(2)} (기간: ${period}일)`;
+      }
     }
+
     depositAmountInput?.addEventListener('input', updateInterestPreview);
     depositPeriodInput?.addEventListener('input', updateInterestPreview);
 
     document.getElementById('depositButton')?.addEventListener('click', () => {
-      const amt = parseFloat(depositAmountInput?.value || '0');
-      const period = parseInt(depositPeriodInput?.value || '0', 10);
-      if (isNaN(amt) || amt <= 0 || isNaN(period) || period <= 0) return;
+      const amt = Number(depositAmountInput?.value || 0);
+      const period = toIntDays(depositPeriodInput?.value || 0);
+      if (amt <= 0 || period <= 0) return;
+
+      // Save exactly the entered integer days
       state.deposits.push({ id: uid(), amount: amt, period, date: toISODate() });
-      // Reflect deposited amount in bankBalance
+
+      // Recompute bank balance from deposits
       state.bankBalance = state.deposits.reduce((a, c) => a + Number(c.amount || 0), 0);
-      saveState(); renderAll();
-      depositAmountInput.value = '';
-      depositPeriodInput.value = '';
-      interestPreview.textContent = '';
+
+      saveState();
+      renderAll();
+
+      // Reset inputs and preview
+      if (depositAmountInput) depositAmountInput.value = '';
+      if (depositPeriodInput) depositPeriodInput.value = '';
+      if (interestPreview) interestPreview.textContent = '';
     });
 
     // Goal logs
