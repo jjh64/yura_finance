@@ -312,11 +312,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (interestPreview) interestPreview.textContent = '';
         return;
       }
-      // 1% daily compounding
-      const interest = amt * (Math.pow(1.01, period) - 1);
+      // Simple interest: 1% per day
+      const interest = amt * 0.01 * period;
       const finalAmt = amt + interest;
       if (interestPreview) {
-        interestPreview.textContent = `예상 이자: $${interest.toFixed(2)} → 만기: $${finalAmt.toFixed(2)} (기간: ${period}일)`;
+        interestPreview.textContent = `예상 이자(단리): $${interest.toFixed(2)} → 만기: $${finalAmt.toFixed(2)} (기간: ${period}일)`;
       }
     }
 
@@ -371,11 +371,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (interestPreview) interestPreview.textContent = '';
         return;
       }
-      // 1% daily compounding
-      const interest = amt * (Math.pow(1.01, period) - 1);
+      // Simple interest: 1% per day
+      const interest = amt * 0.01 * period;
       const finalAmt = amt + interest;
       if (interestPreview) {
-        interestPreview.textContent = `예상 이자: $${interest.toFixed(2)} → 만기: $${finalAmt.toFixed(2)} (기간: ${period}일)`;
+        interestPreview.textContent = `예상 이자(단리): $${interest.toFixed(2)} → 만기: $${finalAmt.toFixed(2)} (기간: ${period}일)`;
       }
     }
 
