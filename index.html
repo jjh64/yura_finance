@@ -40,16 +40,17 @@
             <!-- 왼쪽 패널: 입력 폼 -->
             <div class="bg-white p-6 rounded-2xl shadow-lg">
                 <div class="flex gap-2 mb-4 flex-wrap">
-                  <button id="goalTab" type="button" class="tab-btn px-3 py-2 rounded-lg bg-gray-100">🎯 목표</button>
-                  <button id="savingsTab" type="button" class="tab-btn px-3 py-2 rounded-lg bg-gray-100">🏦 저축</button>
-                  <button id="incomeTab" type="button" class="tab-btn px-3 py-2 rounded-lg bg-gray-100">💰 수입</button>
-                  <button id="expenseTab" type="button" class="tab-btn px-3 py-2 rounded-lg bg-gray-100">💸 지출</button>
+                  <button id="goalTab" type="button" class="tab-btn px-3 py-2 rounded-lg bg-gray-100">🎯 목표 (Goal)</button>
+                  <button id="savingsTab" type="button" class="tab-btn px-3 py-2 rounded-lg bg-gray-100">🏦 저축 (Savings)</button>
+                  <button id="incomeTab" type="button" class="tab-btn px-3 py-2 rounded-lg bg-gray-100">💰 수입 (Income)</button>
+                  <button id="expenseTab" type="button" class="tab-btn px-3 py-2 rounded-lg bg-gray-100">💸 지출 (Expense)</button>
+                  <button id="studyTab" type="button" class="tab-btn px-3 py-2 rounded-lg bg-gray-100">📚 금융 공부</button>
                 </div>
 
                 <!-- 목표 폼 -->
                 <div id="goalSection" class="">
                     <form id="goalForm">
-                        <p class="text-center text-sm mb-4">갖고 싶은 것을 정하고 돈을 모아봐요!</p>
+                        <p class="text-center text-sm mb-4">갖고 싶은 것을 정하고 돈을 모으자!</p>
                         <div class="mb-3"><label for="goalItem" class="font-bold">목표 항목</label><input type="text" id="goalItem" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 레고" required></div>
                         <div class="mb-3"><label for="goalAmount" class="font-bold">목표 금액</label><input type="number" step="0.01" id="goalAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액" required></div>
                         <div class="mb-4"><label for="goalDate" class="font-bold">목표 날짜</label><input type="date" id="goalDate" class="w-full p-2 border rounded-lg mt-1" required></div>
@@ -94,6 +95,43 @@
                        <div class="mb-4"><label for="donationSource" class="font-bold">어디에 기부했나요?</label><input type="text" id="donationSource" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 유니세프"></div>
                        <div class="mb-4"><label for="donationAmount" class="font-bold">얼마를 기부했나요?</label><input type="number" step="0.01" id="donationAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액"></div>
                        <button type="button" id="addDonationButton" class="w-full bg-pink-500 text-white font-bold p-3 rounded-lg hover:bg-pink-600">기부 기록하기</button>
+                    </div>
+                </div>
+
+                <!-- 금융 공부 섹션 -->
+                <div id="studySection" class="hidden">
+                    <h3 class="text-xl font-bold mb-4 text-center text-purple-600">알아두면 똑똑해지는 금융 용어!</h3>
+                    <div class="space-y-4 text-sm max-h-[400px] overflow-y-auto p-2">
+                        <div>
+                            <h4 class="font-bold text-purple-700">💰 수입 (Income)</h4>
+                            <p>내가 용돈을 받거나, 일을 해서 돈을 버는 것을 말해요.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-purple-700">💸 지출 (Expense)</h4>
+                            <p>내가 필요한 물건을 사거나, 무언가를 사용하는 데 돈을 쓰는 것을 말해요.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-purple-700">🏦 예금 (Deposit)</h4>
+                            <p>내 돈을 은행에 안전하게 맡기는 것을 말해요. 은행은 내 돈을 잘 보관해줘요.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-purple-700">🌱 원금 (Principal)</h4>
+                            <p>내가 은행에 처음 맡긴 돈을 '원금'이라고 불러요.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-purple-700">✨ 이자 (Interest)</h4>
+                            <p>은행에 돈을 맡기면, 은행이 고맙다고 '선물'처럼 돈을 조금 더 줘요. 이걸 '이자'라고 해요. 돈을 오래 맡길수록 이자는 더 많아져요!</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-purple-700">➕ 단리 계산법 (Simple Interest)</h4>
+                            <p>이 가계부의 저축 이자는 '단리'로 계산돼요. 단리는 내가 처음 맡긴 '원금'에 대해서만 이자를 주는 방식이에요. 계산이 아주 간단해요!</p>
+                            <p class="mt-2 p-2 bg-purple-50 rounded-lg"><b>계산 공식:</b> 원금 × 이자율 × 기간 = 이자</p>
+                            <p class="mt-1"><b>예시:</b> 100원을 1% 이자율로 10일 동안 맡기면?<br>100원 × 0.01 × 10일 = 10원. 총 10원의 이자를 받아요!</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-purple-700">✖️ 복리 계산법 (Compound Interest)</h4>
+                            <p>'복리'는 원금뿐만 아니라, 받은 이자에도 또 이자를 주는 '마법' 같은 방식이에요. 그래서 단리보다 돈이 더 빨리 불어나요. 마치 눈사람을 굴리는 것과 같아요!</p>
+                        </div>
                     </div>
                 </div>
             </div>

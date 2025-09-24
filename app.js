@@ -30,15 +30,17 @@
   const goalTab = document.getElementById('goalTab'),
         savingsTab = document.getElementById('savingsTab'),
         incomeTab = document.getElementById('incomeTab'),
-        expenseTab = document.getElementById('expenseTab');
+        expenseTab = document.getElementById('expenseTab'),
+        studyTab = document.getElementById('studyTab');
         
   const goalSection = document.getElementById('goalSection'),
         savingsSection = document.getElementById('savingsSection'),
         incomeSection = document.getElementById('incomeSection'),
-        expenseSection = document.getElementById('expenseSection');
+        expenseSection = document.getElementById('expenseSection'),
+        studySection = document.getElementById('studySection');
 
-  const allTabs = [goalTab, savingsTab, incomeTab, expenseTab];
-  const allSections = [goalSection, savingsSection, incomeSection, expenseSection];
+  const allTabs = [goalTab, savingsTab, incomeTab, expenseTab, studyTab];
+  const allSections = [goalSection, savingsSection, incomeSection, expenseSection, studySection];
 
   // 탭 전환
   function setActiveTab(tab) {
@@ -50,6 +52,7 @@
     if (tab === savingsTab) savingsSection.classList.remove('hidden');
     if (tab === incomeTab) incomeSection.classList.remove('hidden');
     if (tab === expenseTab) expenseSection.classList.remove('hidden');
+    if (tab === studyTab) studySection.classList.remove('hidden');
   }
 
   // 이벤트 리스너
@@ -57,6 +60,7 @@
   savingsTab.addEventListener('click', () => setActiveTab(savingsTab));
   incomeTab.addEventListener('click', () => setActiveTab(incomeTab));
   expenseTab.addEventListener('click', () => setActiveTab(expenseTab));
+  studyTab.addEventListener('click', () => setActiveTab(studyTab));
 
   // 항목 삭제/수정 함수
   function handleDelete(type, id) {
