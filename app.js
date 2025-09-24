@@ -4,6 +4,11 @@
   const uid = () => Math.random().toString(36).slice(2, 10);
   const toISODate = (d = new Date()) => new Date(d).toISOString().slice(0, 10);
   const money = (n) => `$${(Number(n) || 0).toFixed(2)}`;
+  const formatDateTime = (isoString) => {
+    if (!isoString) return '';
+    const d = new Date(isoString);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
 
   const defaultState = () => ({
     incomes: [], expenses: [], deposits: [], goals: []
@@ -79,7 +84,7 @@
     const source = document.getElementById('incomeSource').value.trim();
     const amount = parseFloat(document.getElementById('incomeAmount').value);
     if (!source || isNaN(amount) || amount <= 0) return;
-    state.incomes.push({ id: uid(), source, amount, date: toISODate() });
+    state.incomes.push({ id: uid(), source, amount, date: new Date().toISOString() });
     saveState();
     e.target.reset();
   });
@@ -90,7 +95,7 @@
     const amount = parseFloat(document.getElementById('expenseAmount').value);
     const evaluation = Number(document.querySelector('input[name="evaluation"]:checked').value);
     if (!source || isNaN(amount) || amount <= 0) return;
-    state.expenses.push({ id: uid(), source, amount, date: toISODate(), evaluation, isDonation: false });
+    state.expenses.push({ id: uid(), source, amount, date: new Date().toISOString(), evaluation, isDonation: false });
     saveState();
     e.target.reset();
   });
@@ -101,7 +106,7 @@
     const source = sourceInput.value.trim();
     const amount = parseFloat(amountInput.value);
     if (!source || isNaN(amount) || amount <= 0) return;
-    state.expenses.push({ id: uid(), source, amount, date: toISODate(), evaluation: 0, isDonation: true });
+    state.expenses.push({ id: uid(), source, amount, date: new Date().toISOString(), evaluation: 0, isDonation: true });
     saveState();
     sourceInput.value = '';
     amountInput.value = '';
@@ -113,7 +118,7 @@
     const amount = parseFloat(document.getElementById('goalAmount').value);
     const date = document.getElementById('goalDate').value;
     if (!item || isNaN(amount) || amount <= 0 || !date) return;
-    state.goals.push({ id: uid(), item, amount, date, achieved: false });
+    state.goals.push({ id: uid(), item, amount, date, achieved: false, createdAt: new Date().toISOString() });
     saveState();
     e.target.reset();
   });
@@ -131,7 +136,7 @@
   document.getElementById('depositButton').addEventListener('click', () => {
     const amount = Number(depositAmountInput.value), period = Number(depositPeriodInput.value);
     if (amount <= 0 || period <= 0) return;
-    state.deposits.push({ id: uid(), amount, period, date: toISODate() });
+    state.deposits.push({ id: uid(), amount, period, date: new Date().toISOString() });
     saveState();
     depositAmountInput.value = ''; depositPeriodInput.value = ''; interestPreview.textContent = '';
   });
@@ -173,7 +178,6 @@
     const evaluationScore = state.expenses.reduce((s, e) => s + (e.evaluation || 0), 0);
     const totalDonation = state.expenses.filter(e => e.isDonation).reduce((s, e) => s + e.amount, 0);
     
-    document.getElementById('balance').textContent = money(totalIncome - totalExpense);
     document.getElementById('balanceSummary').textContent = money(totalIncome - totalExpense);
     document.getElementById('evaluationScore').textContent = evaluationScore;
     document.getElementById('totalDonation').textContent = money(totalDonation);
@@ -185,7 +189,7 @@
     renderList('incomeList', state.incomes, 'incomes', item => {
       const li = document.createElement('li');
       li.className = 'p-2 bg-blue-50 rounded-lg flex justify-between items-center';
-      li.innerHTML = `<span>${item.source} • ${money(item.amount)}</span>`;
+      li.innerHTML = `<div>${item.source} • ${money(item.amount)}<br><span class="text-xs text-gray-500">${formatDateTime(item.date)}</span></div>`;
       return li;
     });
     renderList('expenseList', state.expenses, 'expenses', item => {
@@ -193,13 +197,13 @@
       li.className = 'p-2 bg-red-50 rounded-lg flex justify-between items-center';
       const score = item.evaluation;
       const scoreText = item.isDonation ? '' : `(${score > 0 ? '+' : ''}${score}점)`;
-      li.innerHTML = `<span>${item.isDonation ? '💖 ' : ''}${item.source} • ${money(item.amount)} <span class="text-xs text-gray-500">${scoreText}</span></span>`;
+      li.innerHTML = `<div>${item.isDonation ? '💖 ' : ''}${item.source} • ${money(item.amount)} <span class="text-xs text-gray-500">${scoreText}</span><br><span class="text-xs text-gray-500">${formatDateTime(item.date)}</span></div>`;
       return li;
     });
     renderList('goalList', state.goals, 'goals', item => {
       const div = document.createElement('div');
       div.className = `p-2 rounded-lg flex justify-between items-center ${item.achieved ? 'bg-gray-100' : 'bg-green-50'}`;
-      div.innerHTML = `<span>🎯 ${item.item} • ${money(item.amount)}</span>`;
+      div.innerHTML = `<div>🎯 ${item.item} • ${money(item.amount)} (목표일: ${item.date})<br><span class="text-xs text-gray-500">추가일: ${formatDateTime(item.createdAt)}</span></div>`;
       return div;
     });
     renderList('depositList', state.deposits, 'deposits', item => {
@@ -207,8 +211,9 @@
       div.className = 'p-2 bg-indigo-50 rounded-lg flex justify-between items-center text-sm';
       const interest = item.amount * 0.01 * item.period;
       const startDate = new Date(item.date);
-      const maturityDate = new Date(startDate.setDate(startDate.getDate() + item.period));
-      div.innerHTML = `<span>💼 ${money(item.amount)} (이자: ${money(interest)})<br>만기: ${toISODate(maturityDate)}</span>`;
+      const maturityDate = new Date(startDate);
+      maturityDate.setDate(startDate.getDate() + item.period);
+      div.innerHTML = `<div>💼 ${money(item.amount)} (이자: ${money(interest)})<br><span class="text-xs text-gray-500">예금일: ${formatDateTime(item.date)}<br>만기일: ${toISODate(maturityDate)}</span></div>`;
       return div;
     });
   }
