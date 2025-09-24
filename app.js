@@ -91,16 +91,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Tabs
     function setActiveTab(tab) {
-      [incomeTab, expenseTab, goalTab].forEach(btn => btn.classList.remove('active'));
-      tab.classList.add('active');
+      [incomeTab, expenseTab, goalTab].forEach(btn => btn?.classList.remove('active'));
+      tab?.classList.add('active');
 
-      incomeSection.classList.add('hidden');
-      expenseForm.classList.add('hidden');
-      goalSection.classList.add('hidden');
+      // Hide all sections safely
+      incomeSection?.classList.add('hidden');
+      goalSection?.classList.add('hidden');
+      // Some layouts use expenseSection, some use expenseForm
+      document.getElementById('expenseSection')?.classList.add('hidden');
+      expenseForm?.classList.add('hidden');
 
-      if (tab === incomeTab) incomeSection.classList.remove('hidden');
-      if (tab === expenseTab) expenseForm.classList.remove('hidden');
-      if (tab === goalTab) goalSection.classList.remove('hidden');
+      if (tab === goalTab) {
+        goalSection?.classList.remove('hidden');
+      } else if (tab === incomeTab) {
+        incomeSection?.classList.remove('hidden');
+      } else if (tab === expenseTab) {
+        (document.getElementById('expenseSection') || expenseForm)?.classList.remove('hidden');
+      }
     }
     incomeTab?.addEventListener('click', () => setActiveTab(incomeTab));
     expenseTab?.addEventListener('click', () => setActiveTab(expenseTab));
@@ -636,10 +643,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Initial draw
+    // Initial draw (remove previous duplicate calls)
     renderAll();
-    setActiveTab(goalTab);
-    setActiveView(listViewTab);
 
     // Optional: cross-device sync via Firebase (fill config and set ENABLE_CLOUD_SYNC=true)
     const ENABLE_CLOUD_SYNC = false; // set to true after adding your Firebase config
@@ -702,6 +707,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Kick off cloud sync after first render
     renderAll();
     initCloudSync();
-    setActiveTab(goalTab);
+
+    // Always start on Goals and List view
     setActiveView(listViewTab);
+    // Defer to ensure any late layout code won’t override it
+    setTimeout(() => setActiveTab(goalTab), 0);
 });

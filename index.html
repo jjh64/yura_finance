@@ -60,8 +60,35 @@
                   <button id="expenseTab" class="tab-btn px-3 py-2 rounded-lg bg-gray-100">💸 지출</button>
                 </div>
 
+                <!-- 목표 폼 -->
+                <div id="goalSection" class="">
+                    <form id="goalForm">
+                        <p class="text-center text-sm mb-4">갖고 싶은 것을 정하고 돈을 모아봐요!<br>(Set a goal and save up for it!)</p>
+                        <div class="mb-3">
+                            <label for="goalItem" class="font-bold">목표 항목 (Item)</label>
+                            <input type="text" id="goalItem" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 레고 (e.g., LEGO)" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="goalAmount" class="font-bold">목표 금액 (Amount)</label>
+                            <input type="number" step="0.01" id="goalAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 75.00)" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="goalDate" class="font-bold">목표 날짜 (Target Date)</label>
+                            <input type="date" id="goalDate" class="w-full p-2 border rounded-lg mt-1" required>
+                        </div>
+                        <button type="submit" class="w-full bg-green-500 text-white font-bold p-3 rounded-lg hover:bg-green-600">목표 추가하기 (Add Goal)</button>
+                    </form>
+                    <div id="goalList" class="mt-4 space-y-2">
+                        <!-- 목표 내역 -->
+                    </div>
+                    <div class="mt-6">
+                        <h4 class="text-lg font-bold text-center text-green-700 mb-2">📒 목표 로그 (Goal Logs)</h4>
+                        <ul id="goalLogsList" class="space-y-2"></ul>
+                    </div>
+                </div>
+
                 <!-- 수입 폼 -->
-                <div id="incomeSection">
+                <div id="incomeSection" class="hidden">
                     <form id="incomeForm">
                         <div class="mb-4">
                             <label for="incomeSource" class="font-bold">어디서 생긴 돈인가요? (Source)</label>
@@ -87,67 +114,42 @@
                 </div>
 
                 <!-- 지출 폼 -->
-                <form id="expenseForm" class="hidden">
-                    <div class="mb-4">
-                        <label for="expenseSource" class="font-bold">어디에 쓴 돈인가요? (Source)</label>
-                        <input type="text" id="expenseSource" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 문구점 (e.g., Stationery Store)" required>
-                    </div>
-                    <div class="mb-4">
-                        <label for="expenseAmount" class="font-bold">얼마인가요? (Amount)</label>
-                        <input type="number" step="0.01" id="expenseAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 2.75)" required>
-                    </div>
-                    <div class="mb-4">
-                        <label class="font-bold">어떤 지출이었나요? (Evaluation)</label>
-                        <div class="flex justify-around mt-2">
-                            <label class="text-center cursor-pointer"><input type="radio" name="evaluation" value="3" class="mr-1" checked>🤔 계획 (Planned)<br>(+3 pts)</label>
-                            <label class="text-center cursor-pointer"><input type="radio" name="evaluation" value="0" class="mr-1">🏠 고정 (Fixed)<br>(0 pts)</label>
-                            <label class="text-center cursor-pointer"><input type="radio" name="evaluation" value="-3" class="mr-1">😲 충동 (Impulse)<br>(-3 pts)</label>
+                <div id="expenseSection" class="hidden">
+                    <form id="expenseForm">
+                        <div class="mb-4">
+                            <label for="expenseSource" class="font-bold">어디에 쓴 돈인가요? (Source)</label>
+                            <input type="text" id="expenseSource" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 문구점 (e.g., Stationery Store)" required>
                         </div>
-                    </div>
-                    <button type="submit" class="w-full bg-red-500 text-white font-bold p-3 rounded-lg hover:bg-red-600">지출 기록하기 (Add Expense)</button>
-                
-                    <hr class="my-6 border-t-2 border-dashed border-gray-200">
+                        <div class="mb-4">
+                            <label for="expenseAmount" class="font-bold">얼마인가요? (Amount)</label>
+                            <input type="number" step="0.01" id="expenseAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 2.75)" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="font-bold">어떤 지출이었나요? (Evaluation)</label>
+                            <div class="flex justify-around mt-2">
+                                <label class="text-center cursor-pointer"><input type="radio" name="evaluation" value="3" class="mr-1" checked>🤔 계획 (Planned)<br>(+3 pts)</label>
+                                <label class="text-center cursor-pointer"><input type="radio" name="evaluation" value="0" class="mr-1">🏠 고정 (Fixed)<br>(0 pts)</label>
+                                <label class="text-center cursor-pointer"><input type="radio" name="evaluation" value="-3" class="mr-1">😲 충동 (Impulse)<br>(-3 pts)</label>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-red-500 text-white font-bold p-3 rounded-lg hover:bg-red-600">지출 기록하기 (Add Expense)</button>
+                    
+                        <hr class="my-6 border-t-2 border-dashed border-gray-200">
 
-                    <!-- 기부 폼 (통합) -->
-                    <div id="donationSection" class="mt-4">
-                         <h3 class="text-xl font-bold mb-4 text-center text-pink-600">💖 기부 (Donation) 💖</h3>
-                        <div class="mb-4">
-                            <label for="donationSource" class="font-bold">어디에 기부했나요? (To)</label>
-                            <input type="text" id="donationSource" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 유니세프 (e.g., UNICEF)">
+                        <!-- 기부 폼 (통합) -->
+                        <div id="donationSection" class="mt-4">
+                             <h3 class="text-xl font-bold mb-4 text-center text-pink-600">💖 기부 (Donation) 💖</h3>
+                            <div class="mb-4">
+                                <label for="donationSource" class="font-bold">어디에 기부했나요? (To)</label>
+                                <input type="text" id="donationSource" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 유니세프 (e.g., UNICEF)">
+                            </div>
+                            <div class="mb-4">
+                                <label for="donationAmount" class="font-bold">얼마를 기부했나요? (Amount)</label>
+                                <input type="number" step="0.01" id="donationAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 1.00)">
+                            </div>
+                            <button type="button" id="addDonationButton" class="w-full bg-pink-500 text-white font-bold p-3 rounded-lg hover:bg-pink-600">기부 기록하기 (Add Donation)</button>
                         </div>
-                        <div class="mb-4">
-                            <label for="donationAmount" class="font-bold">얼마를 기부했나요? (Amount)</label>
-                            <input type="number" step="0.01" id="donationAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 1.00)">
-                        </div>
-                        <button type="button" id="addDonationButton" class="w-full bg-pink-500 text-white font-bold p-3 rounded-lg hover:bg-pink-600">기부 기록하기 (Add Donation)</button>
-                    </div>
-                </form>
-
-                <!-- 목표 폼 -->
-                <div id="goalSection" class="hidden">
-                    <form id="goalForm">
-                        <p class="text-center text-sm mb-4">갖고 싶은 것을 정하고 돈을 모아봐요!<br>(Set a goal and save up for it!)</p>
-                        <div class="mb-3">
-                            <label for="goalItem" class="font-bold">목표 항목 (Item)</label>
-                            <input type="text" id="goalItem" class="w-full p-2 border rounded-lg mt-1" placeholder="예: 레고 (e.g., LEGO)" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="goalAmount" class="font-bold">목표 금액 (Amount)</label>
-                            <input type="number" step="0.01" id="goalAmount" class="w-full p-2 border rounded-lg mt-1" placeholder="금액 (e.g., 75.00)" required>
-                        </div>
-                        <div class="mb-4">
-                            <label for="goalDate" class="font-bold">목표 날짜 (Target Date)</label>
-                            <input type="date" id="goalDate" class="w-full p-2 border rounded-lg mt-1" required>
-                        </div>
-                        <button type="submit" class="w-full bg-green-500 text-white font-bold p-3 rounded-lg hover:bg-green-600">목표 추가하기 (Add Goal)</button>
                     </form>
-                    <div id="goalList" class="mt-4 space-y-2">
-                        <!-- 목표 내역 -->
-                    </div>
-                    <div class="mt-6">
-                        <h4 class="text-lg font-bold text-center text-green-700 mb-2">📒 목표 로그 (Goal Logs)</h4>
-                        <ul id="goalLogsList" class="space-y-2"></ul>
-                    </div>
                 </div>
             </div>
 
